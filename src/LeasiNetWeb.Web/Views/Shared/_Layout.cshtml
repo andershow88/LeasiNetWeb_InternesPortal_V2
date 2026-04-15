@@ -135,30 +135,31 @@
                 <i class="bi bi-list"></i>
             </button>
 
-            <!-- ── KI-Suchleiste (nimmt den gesamten mittleren Bereich ein) ── -->
-            <div style="flex:1; display:flex; align-items:center; gap:.6rem;
+            <!-- ── KI-Suchleiste ── -->
+            <div style="flex:1; display:flex; align-items:center; gap:.7rem;
                         background:var(--mc-bg); border:1.5px solid var(--mc-border);
-                        border-radius:24px; padding:.35rem .35rem .35rem .9rem;
-                        transition:border-color .2s; max-width:680px;"
+                        border-radius:26px; padding:.45rem .55rem .45rem 1.1rem;
+                        transition:border-color .2s;"
                  id="aiSearchBar"
                  onfocusin="this.style.borderColor='var(--mc-gold)'"
                  onfocusout="this.style.borderColor='var(--mc-border)'">
-                <i class="bi bi-stars" style="color:var(--mc-gold); font-size:1rem; flex-shrink:0;"></i>
+                <i class="bi bi-stars" style="color:var(--mc-gold); font-size:1.05rem; flex-shrink:0;"></i>
                 <input id="aiTopbarEingabe" type="text"
                        placeholder="Frag den KI-Assistenten… (z.B. &quot;Zeig offene Anträge&quot;)"
                        style="flex:1; border:none; background:transparent; color:var(--mc-text);
-                              font-size:.87rem; outline:none; min-width:0; font-family:inherit;"
+                              font-size:.9rem; outline:none; min-width:0; font-family:inherit;"
                        onkeydown="aiTopbarKeydown(event)" />
                 <kbd style="font-size:.68rem; color:var(--mc-text-muted); background:var(--mc-surface);
                             border:1px solid var(--mc-border); border-radius:5px; padding:1px 6px;
-                            flex-shrink:0; display:none;" class="d-md-inline">Enter</kbd>
+                            flex-shrink:0;" class="d-none d-md-inline">Enter</kbd>
             </div>
 
-            <div class="mc-topbar-right">
+            <!-- Rechts: Dark-Mode-Toggle + Benutzername -->
+            <div class="mc-topbar-right" style="flex-shrink:0;">
                 <button class="mc-theme-toggle" id="themeToggle" title="Dark Mode umschalten">
                     <i class="bi bi-moon-stars-fill" id="themeIcon"></i>
                 </button>
-                <span class="d-none d-md-inline" style="font-size:.83rem;">@User.Identity.Name</span>
+                <span class="d-none d-md-inline">@User.Identity.Name</span>
             </div>
         </header>
 
