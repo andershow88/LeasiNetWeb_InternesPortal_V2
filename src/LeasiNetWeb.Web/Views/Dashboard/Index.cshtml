@@ -4,134 +4,108 @@
     ViewData["Title"] = "Dashboard";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0"><i class="bi bi-speedometer2 me-2"></i>Dashboard</h1>
-    <a asp-controller="Antraege" asp-action="Neu" class="btn btn-primary">
-        <i class="bi bi-plus-circle me-1"></i> Neuer Antrag
+<!-- Page Header -->
+<div class="mc-page-header">
+    <div>
+        <h1 class="mc-page-title"><i class="bi bi-speedometer2 me-2"></i>Dashboard</h1>
+        <p class="mc-page-subtitle">Übersicht Ihrer Leasinganträge und Kennzahlen</p>
+    </div>
+    <a asp-controller="Antraege" asp-action="Neu" class="btn-mc-primary">
+        <i class="bi bi-plus-circle"></i> Neuer Antrag
     </a>
 </div>
 
-<!-- KPI-Kacheln -->
-<div class="row g-3 mb-4">
-    <div class="col-6 col-md-3">
-        <div class="card lnw-kpi-card border-0 shadow-sm">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="lnw-kpi-icon bg-warning-subtle text-warning me-3">
-                        <i class="bi bi-inbox"></i>
-                    </div>
-                    <div>
-                        <div class="lnw-kpi-value">@Model.OffeneAntraege</div>
-                        <div class="lnw-kpi-label">Offene Anträge</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-md-3">
-        <div class="card lnw-kpi-card border-0 shadow-sm">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="lnw-kpi-icon bg-info-subtle text-info me-3">
-                        <i class="bi bi-arrow-repeat"></i>
-                    </div>
-                    <div>
-                        <div class="lnw-kpi-value">@Model.AntraegeInBearbeitung</div>
-                        <div class="lnw-kpi-label">In Bearbeitung</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-md-3">
-        <div class="card lnw-kpi-card border-0 shadow-sm">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="lnw-kpi-icon bg-success-subtle text-success me-3">
-                        <i class="bi bi-check2-circle"></i>
-                    </div>
-                    <div>
-                        <div class="lnw-kpi-value">@Model.AktiveVertraege</div>
-                        <div class="lnw-kpi-label">Aktive Verträge</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-md-3">
-        <div class="card lnw-kpi-card border-0 shadow-sm">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="lnw-kpi-icon bg-primary-subtle text-primary me-3">
-                        <i class="bi bi-currency-euro"></i>
-                    </div>
-                    <div>
-                        <div class="lnw-kpi-value">@Model.GesamtObligoAktiv.ToString("N0") €</div>
-                        <div class="lnw-kpi-label">Obligo gesamt</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Aktionserforderlich -->
+<!-- Handlungsbedarf -->
 @if (Model.ZuPruefendeAntraege > 0 || Model.ZuGenehmigendeAntraege > 0 || Model.PendingZweiteVoten > 0 || Model.UngeleseneNachrichten > 0)
 {
-    <div class="alert alert-info d-flex flex-wrap gap-3 align-items-center mb-4">
-        <strong><i class="bi bi-bell me-1"></i>Handlungsbedarf:</strong>
+    <div class="alert alert-warning d-flex flex-wrap gap-2 align-items-center mb-4 py-2" style="border-radius:var(--mc-radius);">
+        <strong class="me-1"><i class="bi bi-bell-fill me-1"></i>Handlungsbedarf:</strong>
         @if (Model.ZuPruefendeAntraege > 0)
         {
-            <a asp-controller="Antraege" asp-action="MeinePruefungen" class="badge bg-warning text-dark text-decoration-none">
-                @Model.ZuPruefendeAntraege zu prüfen
+            <a asp-controller="Antraege" asp-action="MeinePruefungen"
+               class="mc-badge badge-warning text-decoration-none">
+                <i class="bi bi-clipboard-check"></i> @Model.ZuPruefendeAntraege zu prüfen
             </a>
         }
         @if (Model.ZuGenehmigendeAntraege > 0)
         {
-            <a asp-controller="Antraege" asp-action="MeineGenehmigungen" class="badge bg-danger text-decoration-none">
-                @Model.ZuGenehmigendeAntraege zu genehmigen
+            <a asp-controller="Antraege" asp-action="MeineGenehmigungen"
+               class="mc-badge badge-danger text-decoration-none">
+                <i class="bi bi-check2-square"></i> @Model.ZuGenehmigendeAntraege zu genehmigen
             </a>
         }
         @if (Model.PendingZweiteVoten > 0)
         {
-            <a asp-controller="Antraege" asp-action="MeineZweiteVoten" class="badge bg-primary text-decoration-none">
-                @Model.PendingZweiteVoten 2. Vote ausstehend
+            <a asp-controller="Antraege" asp-action="MeineZweiteVoten"
+               class="mc-badge badge-primary text-decoration-none">
+                <i class="bi bi-person-check"></i> @Model.PendingZweiteVoten 2. Vote ausstehend
             </a>
         }
         @if (Model.UngeleseneNachrichten > 0)
         {
-            <a asp-controller="Nachrichten" asp-action="Index" class="badge bg-secondary text-decoration-none">
-                @Model.UngeleseneNachrichten ungelesene Nachrichten
+            <a asp-controller="Nachrichten" asp-action="Index"
+               class="mc-badge badge-secondary text-decoration-none">
+                <i class="bi bi-envelope"></i> @Model.UngeleseneNachrichten ungelesene Nachrichten
             </a>
         }
     </div>
 }
 
-<!-- Meine aktuellen Anträge -->
-<div class="card shadow-sm">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Meine aktuellen Anträge</h5>
-        <a asp-controller="Antraege" asp-action="Index" class="btn btn-sm btn-outline-secondary">Alle anzeigen</a>
+<!-- KPI Grid -->
+<div class="mc-kpi-grid">
+    <div class="mc-kpi-card">
+        <div class="mc-kpi-icon gold"><i class="bi bi-inbox"></i></div>
+        <div class="mc-kpi-label">Offene Anträge</div>
+        <div class="mc-kpi-value">@Model.OffeneAntraege</div>
+        <div class="mc-kpi-sub">Warten auf Bearbeitung</div>
     </div>
-    <div class="card-body p-0">
+    <div class="mc-kpi-card">
+        <div class="mc-kpi-icon blue"><i class="bi bi-arrow-repeat"></i></div>
+        <div class="mc-kpi-label">In Bearbeitung</div>
+        <div class="mc-kpi-value">@Model.AntraegeInBearbeitung</div>
+        <div class="mc-kpi-sub">Aktive Vorgänge</div>
+    </div>
+    <div class="mc-kpi-card">
+        <div class="mc-kpi-icon green"><i class="bi bi-check2-circle"></i></div>
+        <div class="mc-kpi-label">Aktive Verträge</div>
+        <div class="mc-kpi-value">@Model.AktiveVertraege</div>
+        <div class="mc-kpi-sub">Laufende Leasingverträge</div>
+    </div>
+    <div class="mc-kpi-card">
+        <div class="mc-kpi-icon navy"><i class="bi bi-currency-euro"></i></div>
+        <div class="mc-kpi-label">Obligo gesamt</div>
+        <div class="mc-kpi-value text-currency">@Model.GesamtObligoAktiv.ToString("N0") €</div>
+        <div class="mc-kpi-sub">Aktives Gesamtvolumen</div>
+    </div>
+</div>
+
+<!-- Aktuelle Anträge -->
+<div class="mc-card">
+    <div class="mc-card-header">
+        <h2 class="mc-card-title"><i class="bi bi-clock-history"></i> Meine aktuellen Anträge</h2>
+        <a asp-controller="Antraege" asp-action="Index" class="btn-mc-ghost">
+            <i class="bi bi-arrow-right"></i> Alle anzeigen
+        </a>
+    </div>
+    <div class="mc-card-body" style="padding:0;">
         @if (!Model.MeineAktuellenAntraege.Any())
         {
-            <div class="text-center text-muted py-4">
-                <i class="bi bi-inbox fs-3"></i>
-                <p class="mt-2">Keine aktuellen Anträge vorhanden.</p>
+            <div class="text-center py-5" style="color:var(--mc-text-muted);">
+                <i class="bi bi-inbox" style="font-size:2rem;"></i>
+                <p class="mt-2 mb-0 small">Keine aktuellen Anträge vorhanden.</p>
             </div>
         }
         else
         {
-            <div class="table-responsive">
-                <table class="table table-hover mb-0 align-middle">
-                    <thead class="table-light">
+            <div class="mc-table-wrapper">
+                <table class="mc-table">
+                    <thead>
                         <tr>
                             <th>Antrag-Nr.</th>
                             <th>Typ</th>
                             <th>Status</th>
                             <th>Leasinggesellschaft</th>
-                            <th class="text-end">Obligo</th>
+                            <th style="text-align:right;">Obligo</th>
                             <th>Geändert</th>
                             <th></th>
                         </tr>
@@ -142,13 +116,15 @@
                             <tr>
                                 <td><code>@antrag.AntragNummer</code></td>
                                 <td>@antrag.AntragTyp</td>
-                                <td><span class="badge @StatusBadgeClass(antrag.Status)">@antrag.Status</span></td>
+                                <td><span class="mc-badge @StatusBadgeClass(antrag.Status)">@antrag.Status</span></td>
                                 <td>@(antrag.Leasinggesellschaft ?? "–")</td>
-                                <td class="text-end">@antrag.Obligo.ToString("N2") €</td>
-                                <td class="text-muted small">@antrag.GeaendertAm.ToString("dd.MM.yyyy HH:mm")</td>
+                                <td style="text-align:right;" class="text-currency">@antrag.Obligo.ToString("N2") €</td>
+                                <td style="color:var(--mc-text-muted); font-size:0.82rem;">@antrag.GeaendertAm.ToString("dd.MM.yyyy HH:mm")</td>
                                 <td>
                                     <a asp-controller="Antraege" asp-action="Details" asp-route-id="@antrag.Id"
-                                       class="btn btn-sm btn-outline-primary">Details</a>
+                                       class="btn-mc-ghost" style="font-size:0.78rem; padding:0.3rem 0.7rem;">
+                                        Details <i class="bi bi-chevron-right"></i>
+                                    </a>
                                 </td>
                             </tr>
                         }
@@ -160,17 +136,17 @@
 </div>
 
 @functions {
-    private static string StatusBadgeClass(LeasiNetWeb.Domain.Enums.AntragStatus status) => status switch
+    private static string StatusBadgeClass(AntragStatus status) => status switch
     {
-        AntragStatus.Entwurf => "bg-secondary",
-        AntragStatus.Eingereicht => "bg-warning text-dark",
-        AntragStatus.InPruefung => "bg-info text-dark",
-        AntragStatus.BeiMitarbeiter => "bg-primary",
-        AntragStatus.BeiLeasinggesellschaft => "bg-info",
-        AntragStatus.ZweiteVoteErforderlich => "bg-warning text-dark",
-        AntragStatus.Genehmigt => "bg-success",
-        AntragStatus.Abgelehnt => "bg-danger",
-        AntragStatus.Archiviert => "bg-light text-dark",
-        _ => "bg-secondary"
+        AntragStatus.Entwurf                  => "badge-secondary",
+        AntragStatus.Eingereicht              => "badge-warning",
+        AntragStatus.InPruefung               => "badge-primary",
+        AntragStatus.BeiMitarbeiter           => "badge-primary",
+        AntragStatus.BeiLeasinggesellschaft   => "badge-primary",
+        AntragStatus.ZweiteVoteErforderlich   => "badge-warning",
+        AntragStatus.Genehmigt                => "badge-success",
+        AntragStatus.Abgelehnt                => "badge-danger",
+        AntragStatus.Archiviert               => "badge-secondary",
+        _                                     => "badge-secondary"
     };
 }

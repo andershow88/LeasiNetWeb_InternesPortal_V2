@@ -7,18 +7,17 @@
         ?? new System.Collections.Generic.List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>();
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="mc-page-header">
     <div>
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb mb-1">
-                <li class="breadcrumb-item"><a asp-action="Index">Anträge</a></li>
-                <li class="breadcrumb-item active">@Model.AntragNummer</li>
-            </ol>
-        </nav>
-        <h1 class="h3 mb-0">
+        <div style="font-size:0.82rem; color:var(--mc-text-muted); margin-bottom:0.4rem;">
+            <a asp-action="Index" style="color:var(--mc-primary);">Anträge</a>
+            <span style="margin:0 0.4rem;">/</span>
+            <span>@Model.AntragNummer</span>
+        </div>
+        <h1 class="mc-page-title" style="font-size:1.25rem;">
             <i class="bi bi-file-earmark-text me-2"></i>@Model.AntragNummer
-            <span class="badge @StatusBadgeClass(Model.Status) ms-2">@Model.Status</span>
-            @if (Model.ZweiteVoteErforderlich) { <span class="badge bg-warning text-dark ms-1">2. Vote</span> }
+            <span class="mc-badge @StatusBadgeClass(Model.Status) ms-2">@Model.Status</span>
+            @if (Model.ZweiteVoteErforderlich) { <span class="mc-badge badge-warning ms-1">2. Vote</span> }
         </h1>
     </div>
     <!-- Aktionsbuttons -->
@@ -255,15 +254,15 @@
 @functions {
     private static string StatusBadgeClass(AntragStatus status) => status switch
     {
-        AntragStatus.Entwurf => "bg-secondary",
-        AntragStatus.Eingereicht => "bg-warning text-dark",
-        AntragStatus.InPruefung => "bg-info text-dark",
-        AntragStatus.BeiMitarbeiter => "bg-primary",
-        AntragStatus.BeiLeasinggesellschaft => "bg-info",
-        AntragStatus.ZweiteVoteErforderlich => "bg-warning text-dark",
-        AntragStatus.Genehmigt => "bg-success",
-        AntragStatus.Abgelehnt => "bg-danger",
-        AntragStatus.Archiviert => "bg-light text-dark",
-        _ => "bg-secondary"
+        AntragStatus.Entwurf                => "badge-secondary",
+        AntragStatus.Eingereicht            => "badge-warning",
+        AntragStatus.InPruefung             => "badge-primary",
+        AntragStatus.BeiMitarbeiter         => "badge-primary",
+        AntragStatus.BeiLeasinggesellschaft => "badge-primary",
+        AntragStatus.ZweiteVoteErforderlich => "badge-warning",
+        AntragStatus.Genehmigt              => "badge-success",
+        AntragStatus.Abgelehnt              => "badge-danger",
+        AntragStatus.Archiviert             => "badge-secondary",
+        _                                   => "badge-secondary"
     };
 }

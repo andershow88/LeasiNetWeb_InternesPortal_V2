@@ -4,39 +4,47 @@
     ViewData["Title"] = "Leasinganträge";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0"><i class="bi bi-file-earmark-text me-2"></i>Leasinganträge</h1>
-    <a asp-action="Neu" class="btn btn-primary">
-        <i class="bi bi-plus-circle me-1"></i> Neuer Antrag
+<div class="mc-page-header">
+    <div>
+        <h1 class="mc-page-title"><i class="bi bi-file-earmark-text me-2"></i>Leasinganträge</h1>
+        <p class="mc-page-subtitle">Alle Anträge im Überblick</p>
+    </div>
+    <a asp-action="Neu" class="btn-mc-primary">
+        <i class="bi bi-plus-circle"></i> Neuer Antrag
     </a>
 </div>
 
 <!-- Status-Filter -->
-<div class="mb-3 d-flex flex-wrap gap-2">
-    <a asp-action="Index" class="btn btn-sm @(ViewBag.AktuellerStatus == null ? "btn-primary" : "btn-outline-secondary")">Alle</a>
+<div class="mc-filter-bar">
+    <a asp-action="Index"
+       class="@(ViewBag.AktuellerStatus == null ? "btn-mc-primary" : "btn-mc-ghost") btn-mc-ghost"
+       style="@(ViewBag.AktuellerStatus == null ? "background:var(--mc-primary);color:#fff;" : "")">
+        Alle
+    </a>
     @foreach (AntragStatus s in Enum.GetValues<AntragStatus>())
     {
         <a asp-action="Index" asp-route-status="@((int)s)"
-           class="btn btn-sm @(ViewBag.AktuellerStatus?.ToString() == s.ToString() ? "btn-primary" : "btn-outline-secondary")">
+           class="btn-mc-ghost"
+           style="@(ViewBag.AktuellerStatus?.ToString() == s.ToString() ? "background:var(--mc-primary);color:#fff;" : "")">
             @s
         </a>
     }
 </div>
 
-<div class="card shadow-sm">
-    <div class="card-body p-0">
+<div class="mc-card">
+    <div style="padding:0;">
         @if (!Model.Any())
         {
-            <div class="text-center text-muted py-5">
-                <i class="bi bi-inbox fs-2"></i>
-                <p class="mt-2">Keine Anträge gefunden.</p>
+            <div class="text-center py-5" style="color:var(--mc-text-muted);">
+                <i class="bi bi-inbox" style="font-size:2rem;"></i>
+                <p class="mt-2 mb-0 small">Keine Anträge gefunden.</p>
             </div>
         }
         else
         {
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
+            <div class="mc-table-wrapper">
+                <table class="mc-table">
+                    <thead>
                         <tr>
                             <th>Antrag-Nr.</th>
                             <th>Typ</th>
@@ -44,7 +52,7 @@
                             <th>Eingereicht von</th>
                             <th>Leasinggesellschaft</th>
                             <th>Sachbearbeiter</th>
-                            <th class="text-end">Obligo</th>
+                            <th style="text-align:right;">Obligo</th>
                             <th>Erstellt</th>
                             <th></th>
                         </tr>
@@ -57,18 +65,19 @@
                                     <code>@a.AntragNummer</code>
                                     @if (a.ZweiteVoteErforderlich)
                                     {
-                                        <span class="badge bg-warning text-dark ms-1">2. Vote</span>
+                                        <span class="mc-badge badge-warning ms-1">2. Vote</span>
                                     }
                                 </td>
                                 <td>@a.AntragTyp</td>
-                                <td><span class="badge @StatusBadgeClass(a.Status)">@a.Status</span></td>
+                                <td><span class="mc-badge @StatusBadgeClass(a.Status)">@a.Status</span></td>
                                 <td>@a.EingereichtVon</td>
                                 <td>@(a.Leasinggesellschaft ?? "–")</td>
                                 <td>@(a.SachbearbeiterMB ?? "–")</td>
-                                <td class="text-end">@a.Obligo.ToString("N2") €</td>
-                                <td class="text-muted small">@a.ErstelltAm.ToString("dd.MM.yyyy")</td>
+                                <td style="text-align:right;" class="text-currency">@a.Obligo.ToString("N2") €</td>
+                                <td style="color:var(--mc-text-muted); font-size:0.82rem;">@a.ErstelltAm.ToString("dd.MM.yyyy")</td>
                                 <td>
-                                    <a asp-action="Details" asp-route-id="@a.Id" class="btn btn-sm btn-outline-primary">
+                                    <a asp-action="Details" asp-route-id="@a.Id" class="btn-mc-ghost"
+                                       style="font-size:0.78rem; padding:0.3rem 0.7rem;">
                                         <i class="bi bi-eye"></i>
                                     </a>
                                 </td>
@@ -84,15 +93,15 @@
 @functions {
     private static string StatusBadgeClass(AntragStatus status) => status switch
     {
-        AntragStatus.Entwurf => "bg-secondary",
-        AntragStatus.Eingereicht => "bg-warning text-dark",
-        AntragStatus.InPruefung => "bg-info text-dark",
-        AntragStatus.BeiMitarbeiter => "bg-primary",
-        AntragStatus.BeiLeasinggesellschaft => "bg-info",
-        AntragStatus.ZweiteVoteErforderlich => "bg-warning text-dark",
-        AntragStatus.Genehmigt => "bg-success",
-        AntragStatus.Abgelehnt => "bg-danger",
-        AntragStatus.Archiviert => "bg-light text-dark",
-        _ => "bg-secondary"
+        AntragStatus.Entwurf                => "badge-secondary",
+        AntragStatus.Eingereicht            => "badge-warning",
+        AntragStatus.InPruefung             => "badge-primary",
+        AntragStatus.BeiMitarbeiter         => "badge-primary",
+        AntragStatus.BeiLeasinggesellschaft => "badge-primary",
+        AntragStatus.ZweiteVoteErforderlich => "badge-warning",
+        AntragStatus.Genehmigt              => "badge-success",
+        AntragStatus.Abgelehnt              => "badge-danger",
+        AntragStatus.Archiviert             => "badge-secondary",
+        _                                   => "badge-secondary"
     };
 }

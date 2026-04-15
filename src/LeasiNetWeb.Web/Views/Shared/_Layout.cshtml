@@ -1,112 +1,201 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="de" data-theme="light">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] – LeasiNetWeb</title>
+    <link rel="icon" type="image/x-icon" href="~/favicon.ico" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/merkur.css" asp-append-version="true" />
 </head>
-<body class="lnw-body">
+<body class="mc-body">
 
 @if (User.Identity?.IsAuthenticated == true)
 {
-    <nav class="navbar navbar-expand-lg lnw-navbar">
-        <div class="container-fluid">
-            <a class="navbar-brand lnw-brand" asp-controller="Dashboard" asp-action="Index">
-                <i class="bi bi-building"></i> LeasiNetWeb
+    <!-- ── Sidebar ──────────────────────────────────────────────────────── -->
+    <aside class="mc-sidebar" id="mcSidebar">
+        <!-- Brand / Logo -->
+        <div class="mc-sidebar-brand">
+            <a asp-controller="Dashboard" asp-action="Index" class="mc-logo" style="text-decoration:none">
+                <img src="~/merkur-logo.svg" alt="Merkur Privatbank" class="mc-logo-img" />
+                <div class="mc-logo-title">LeasiNetWeb</div>
+                <div class="mc-logo-subtitle">Internes Portal</div>
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
-                <span class="navbar-toggler-icon"></span>
+        </div>
+
+        <!-- Angemeldeter Benutzer -->
+        <div class="mc-sidebar-bank">
+            <div class="mc-sidebar-bank-label">Angemeldet als</div>
+            <div class="mc-sidebar-bank-name">@User.Identity.Name</div>
+            <div class="mc-sidebar-bank-user">@(User.FindFirst("Rolle")?.Value ?? "–")</div>
+        </div>
+
+        <!-- Navigation -->
+        <ul class="mc-nav">
+            <li class="mc-nav-item">
+                <a asp-controller="Dashboard" asp-action="Index"
+                   class="mc-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Dashboard" ? "active" : "")">
+                    <i class="bi bi-speedometer2"></i> Dashboard
+                </a>
+            </li>
+            <li class="mc-nav-item">
+                <a asp-controller="Antraege" asp-action="Index"
+                   class="mc-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Antraege" ? "active" : "")">
+                    <i class="bi bi-file-earmark-text"></i> Alle Anträge
+                </a>
+            </li>
+            @if (User.HasClaim("Rolle", "SachbearbeiterMB") || User.HasClaim("Rolle", "InternerPruefer") || User.HasClaim("Rolle", "Administrator"))
+            {
+                <li class="mc-nav-item">
+                    <a asp-controller="Antraege" asp-action="MeinePruefungen" class="mc-nav-link">
+                        <i class="bi bi-clipboard-check"></i> Meine Prüfungen
+                    </a>
+                </li>
+            }
+            @if (User.HasClaim("Rolle", "Genehmiger") || User.HasClaim("Rolle", "Administrator"))
+            {
+                <li class="mc-nav-item">
+                    <a asp-controller="Antraege" asp-action="MeineGenehmigungen" class="mc-nav-link">
+                        <i class="bi bi-check2-square"></i> Genehmigungen
+                    </a>
+                </li>
+                <li class="mc-nav-item">
+                    <a asp-controller="Antraege" asp-action="MeineZweiteVoten" class="mc-nav-link">
+                        <i class="bi bi-person-check"></i> 2. Vote
+                    </a>
+                </li>
+            }
+            <li class="mc-nav-item">
+                <a asp-controller="Antraege" asp-action="Archiv" class="mc-nav-link">
+                    <i class="bi bi-archive"></i> Archiv
+                </a>
+            </li>
+            <li class="mc-nav-item" style="margin-top:0.5rem; border-top:1px solid var(--mc-border); padding-top:0.5rem;">
+                <a asp-controller="Nachrichten" asp-action="Index"
+                   class="mc-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Nachrichten" ? "active" : "")">
+                    <i class="bi bi-envelope"></i> Nachrichten
+                </a>
+            </li>
+            <li class="mc-nav-item">
+                <a asp-controller="Hilfe" asp-action="Index"
+                   class="mc-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Hilfe" ? "active" : "")">
+                    <i class="bi bi-question-circle"></i> Hilfe
+                </a>
+            </li>
+        </ul>
+
+        <!-- Sidebar Footer: Logout -->
+        <div class="mc-sidebar-footer">
+            <form asp-controller="Account" asp-action="Logout" method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="mc-logout-btn">
+                    <i class="bi bi-box-arrow-right"></i> Abmelden
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- ── Main ─────────────────────────────────────────────────────────── -->
+    <div class="mc-main">
+        <!-- Top Bar -->
+        <header class="mc-topbar">
+            <button class="mc-sidebar-toggle d-lg-none" id="sidebarToggle" aria-label="Menü öffnen">
+                <i class="bi bi-list"></i>
             </button>
-            <div class="collapse navbar-collapse" id="navMain">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" asp-controller="Dashboard" asp-action="Index">
-                            <i class="bi bi-speedometer2"></i> Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                            <i class="bi bi-file-earmark-text"></i> Anträge
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" asp-controller="Antraege" asp-action="Index">Alle Anträge</a></li>
-                            <li><a class="dropdown-item" asp-controller="Antraege" asp-action="MeinePruefungen">Meine Prüfungen</a></li>
-                            <li><a class="dropdown-item" asp-controller="Antraege" asp-action="MeineGenehmigungen">Meine Genehmigungen</a></li>
-                            <li><a class="dropdown-item" asp-controller="Antraege" asp-action="MeineZweiteVoten">2. Vote</a></li>
-                            <li><hr class="dropdown-divider" /></li>
-                            <li><a class="dropdown-item" asp-controller="Antraege" asp-action="Archiv">Archiv</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" asp-controller="Nachrichten" asp-action="Index">
-                            <i class="bi bi-envelope"></i> Nachrichten
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" asp-controller="Hilfe" asp-action="Index">
-                            <i class="bi bi-question-circle"></i> Hilfe
-                        </a>
-                    </li>
-                </ul>
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                            <i class="bi bi-person-circle"></i> @User.Identity.Name
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li>
-                                <span class="dropdown-item-text text-muted small">@User.FindFirst("Rolle")?.Value</span>
-                            </li>
-                            <li><hr class="dropdown-divider" /></li>
-                            <li>
-                                <form asp-controller="Account" asp-action="Logout" method="post">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit" class="dropdown-item">
-                                        <i class="bi bi-box-arrow-right"></i> Abmelden
-                                    </button>
-                                </form>
-                            </li>
-                        </ul>
-                    </li>
-                </ul>
+            <div class="mc-breadcrumb">
+                @if (ViewData["BreadcrumbParent"] is string parent && ViewData["BreadcrumbParentUrl"] is string parentUrl)
+                {
+                    <a href="@parentUrl">@parent</a>
+                    <span class="separator">/</span>
+                }
+                <span>@ViewData["Title"]</span>
             </div>
-        </div>
-    </nav>
-}
+            <div class="mc-topbar-right">
+                <button class="mc-theme-toggle" id="themeToggle" title="Dark Mode umschalten">
+                    <i class="bi bi-moon-stars-fill" id="themeIcon"></i>
+                </button>
+                <span class="d-none d-md-inline">@User.Identity.Name</span>
+            </div>
+        </header>
 
-<div class="container-fluid lnw-content">
-    @if (TempData["Erfolg"] is string erfolg)
-    {
-        <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
-            <i class="bi bi-check-circle"></i> @erfolg
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <!-- Flash Messages -->
+        <div class="mc-content" style="padding-bottom:0; padding-top:0.75rem; min-height:0; flex:none;">
+            @if (TempData["Erfolg"] is string erfolg)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="bi bi-check-circle me-1"></i> @erfolg
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            @if (TempData["Fehler"] is string fehler)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle me-1"></i> @fehler
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
         </div>
-    }
-    @if (TempData["Fehler"] is string fehler)
-    {
-        <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
-            <i class="bi bi-exclamation-triangle"></i> @fehler
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
 
-    <main role="main" class="pb-4">
-        @RenderBody()
-    </main>
-</div>
+        <!-- Page Content -->
+        <main class="mc-content" role="main">
+            @RenderBody()
+        </main>
 
-<footer class="lnw-footer">
-    <div class="container-fluid">
-        <span class="text-muted small">&copy; @DateTime.Now.Year LeasiNetWeb &mdash; Internes Portal</span>
+        <!-- Footer -->
+        <footer class="mc-footer">
+            <span>&copy; @DateTime.Now.Year Merkur Privatbank KGaA &mdash; LeasiNetWeb Internes Portal</span>
+        </footer>
     </div>
-</footer>
+
+    <!-- Mobile sidebar overlay -->
+    <div id="sidebarOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:199;" onclick="closeSidebar()"></div>
+}
+else
+{
+    @RenderBody()
+}
 
 <script src="~/lib/jquery/dist/jquery.min.js"></script>
 <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 <script src="~/js/site.js" asp-append-version="true"></script>
+
+<script>
+    // ── Dark Mode ────────────────────────────────────────────────────────────
+    (function () {
+        const stored = localStorage.getItem('mc-theme') || 'light';
+        document.documentElement.setAttribute('data-theme', stored);
+        updateThemeIcon(stored);
+    })();
+
+    document.getElementById('themeToggle')?.addEventListener('click', function () {
+        const current = document.documentElement.getAttribute('data-theme') || 'light';
+        const next = current === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('mc-theme', next);
+        updateThemeIcon(next);
+    });
+
+    function updateThemeIcon(theme) {
+        const icon = document.getElementById('themeIcon');
+        if (!icon) return;
+        icon.className = theme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
+    }
+
+    // ── Mobile Sidebar ───────────────────────────────────────────────────────
+    document.getElementById('sidebarToggle')?.addEventListener('click', function () {
+        const sidebar = document.getElementById('mcSidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        sidebar.classList.toggle('open');
+        overlay.style.display = sidebar.classList.contains('open') ? 'block' : 'none';
+    });
+
+    function closeSidebar() {
+        document.getElementById('mcSidebar')?.classList.remove('open');
+        document.getElementById('sidebarOverlay').style.display = 'none';
+    }
+</script>
+
 @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

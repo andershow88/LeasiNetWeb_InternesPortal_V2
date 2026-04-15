@@ -3,42 +3,50 @@
     ViewData["Title"] = "Nachrichten";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0"><i class="bi bi-envelope me-2"></i>Posteingang</h1>
-    <a asp-action="Neu" class="btn btn-primary">
-        <i class="bi bi-pencil-square me-1"></i> Neue Nachricht
+<div class="mc-page-header">
+    <div>
+        <h1 class="mc-page-title"><i class="bi bi-envelope me-2"></i>Posteingang</h1>
+        <p class="mc-page-subtitle">Interne Nachrichten und Benachrichtigungen</p>
+    </div>
+    <a asp-action="Neu" class="btn-mc-primary">
+        <i class="bi bi-pencil-square"></i> Neue Nachricht
     </a>
 </div>
 
-<div class="card shadow-sm">
-    <div class="card-body p-0">
+<div class="mc-card">
+    <div style="padding:0;">
         @if (!Model.Any())
         {
-            <div class="text-center text-muted py-5">
-                <i class="bi bi-envelope-open fs-2"></i>
-                <p class="mt-2">Keine Nachrichten vorhanden.</p>
+            <div class="text-center py-5" style="color:var(--mc-text-muted);">
+                <i class="bi bi-envelope-open" style="font-size:2rem;"></i>
+                <p class="mt-2 mb-0 small">Keine Nachrichten vorhanden.</p>
             </div>
         }
         else
         {
-            <ul class="list-group list-group-flush">
+            <ul class="list-unstyled mb-0">
                 @foreach (var n in Model)
                 {
-                    <li class="list-group-item list-group-item-action @(!n.Gelesen ? "fw-semibold" : "")">
-                        <a asp-action="Details" asp-route-id="@n.Id" class="text-decoration-none text-dark d-flex justify-content-between align-items-center">
-                            <div>
+                    <li style="border-bottom:1px solid var(--mc-border);">
+                        <a asp-action="Details" asp-route-id="@n.Id"
+                           class="d-flex justify-content-between align-items-center px-4 py-3 text-decoration-none"
+                           style="color:var(--mc-text); transition:background 0.12s;"
+                           onmouseover="this.style.background='var(--mc-bg)'" onmouseout="this.style.background=''">
+                            <div class="d-flex align-items-center gap-2">
                                 @if (!n.Gelesen)
                                 {
-                                    <span class="badge bg-primary me-2">Neu</span>
+                                    <span class="mc-badge badge-primary">Neu</span>
                                 }
-                                <span>@n.Betreff</span>
-                                <span class="text-muted fw-normal ms-2 small">von @n.Absender</span>
+                                <span class="@(!n.Gelesen ? "fw-semibold" : "")">@n.Betreff</span>
+                                <span style="color:var(--mc-text-muted); font-size:0.82rem;">von @n.Absender</span>
                                 @if (n.AntragNummer is not null)
                                 {
-                                    <span class="badge bg-light text-dark border ms-2 small">@n.AntragNummer</span>
+                                    <span class="mc-badge badge-secondary" style="font-size:0.7rem;">@n.AntragNummer</span>
                                 }
                             </div>
-                            <span class="text-muted small">@n.ErstelltAm.ToString("dd.MM.yyyy HH:mm")</span>
+                            <span style="color:var(--mc-text-muted); font-size:0.8rem; white-space:nowrap;">
+                                @n.ErstelltAm.ToString("dd.MM.yyyy HH:mm")
+                            </span>
                         </a>
                     </li>
                 }
