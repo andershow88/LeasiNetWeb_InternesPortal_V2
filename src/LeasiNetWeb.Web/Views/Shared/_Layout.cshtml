@@ -130,83 +130,90 @@
     <!-- ── Main ─────────────────────────────────────────────────────────── -->
     <div class="mc-main">
         <!-- Top Bar -->
-        <header class="mc-topbar">
+        <header class="mc-topbar" style="gap:.75rem;">
             <button class="mc-sidebar-toggle d-lg-none" id="sidebarToggle" aria-label="Menü öffnen">
                 <i class="bi bi-list"></i>
             </button>
-            <div class="mc-breadcrumb">
-                @if (ViewData["BreadcrumbParent"] is string parent && ViewData["BreadcrumbParentUrl"] is string parentUrl)
-                {
-                    <a href="@parentUrl">@parent</a>
-                    <span class="separator">/</span>
-                }
-                <span>@ViewData["Title"]</span>
+
+            <!-- ── KI-Suchleiste (nimmt den gesamten mittleren Bereich ein) ── -->
+            <div style="flex:1; display:flex; align-items:center; gap:.6rem;
+                        background:var(--mc-bg); border:1.5px solid var(--mc-border);
+                        border-radius:24px; padding:.35rem .35rem .35rem .9rem;
+                        transition:border-color .2s; max-width:680px;"
+                 id="aiSearchBar"
+                 onfocusin="this.style.borderColor='var(--mc-gold)'"
+                 onfocusout="this.style.borderColor='var(--mc-border)'">
+                <i class="bi bi-stars" style="color:var(--mc-gold); font-size:1rem; flex-shrink:0;"></i>
+                <input id="aiTopbarEingabe" type="text"
+                       placeholder="Frag den KI-Assistenten… (z.B. &quot;Zeig offene Anträge&quot;)"
+                       style="flex:1; border:none; background:transparent; color:var(--mc-text);
+                              font-size:.87rem; outline:none; min-width:0; font-family:inherit;"
+                       onkeydown="aiTopbarKeydown(event)" />
+                <kbd style="font-size:.68rem; color:var(--mc-text-muted); background:var(--mc-surface);
+                            border:1px solid var(--mc-border); border-radius:5px; padding:1px 6px;
+                            flex-shrink:0; display:none;" class="d-md-inline">Enter</kbd>
             </div>
+
             <div class="mc-topbar-right">
-                <!-- KI-Assistent Button -->
-                <button id="aiBtn" onclick="aiOeffnen()" title="KI-Assistent (Strg+K)"
-                        style="background:none; border:none; cursor:pointer; display:flex; align-items:center; gap:0.4rem; padding:0.3rem 0.7rem; border-radius:20px; border:1px solid var(--mc-border); color:var(--mc-text-muted); font-size:0.8rem; transition:all .2s;">
-                    <i class="bi bi-stars" style="font-size:1rem; color:var(--mc-gold);"></i>
-                    <span class="d-none d-sm-inline">KI-Assistent</span>
-                    <span class="d-none d-md-inline" style="font-size:0.7rem; opacity:.6; background:var(--mc-surface); border-radius:4px; padding:0 4px;">⌘K</span>
-                </button>
                 <button class="mc-theme-toggle" id="themeToggle" title="Dark Mode umschalten">
                     <i class="bi bi-moon-stars-fill" id="themeIcon"></i>
                 </button>
-                <span class="d-none d-md-inline">@User.Identity.Name</span>
+                <span class="d-none d-md-inline" style="font-size:.83rem;">@User.Identity.Name</span>
             </div>
         </header>
 
         <!-- ── KI-Assistent Modal ──────────────────────────────────────── -->
-        <div id="aiModal" style="display:none; position:fixed; inset:0; z-index:1000; align-items:center; justify-content:center;">
+        <div id="aiModal" style="display:none; position:fixed; inset:0; z-index:1000; align-items:flex-start; justify-content:center; padding-top:70px;">
             <!-- Backdrop -->
-            <div onclick="aiSchliessen()" style="position:absolute; inset:0; background:rgba(0,0,0,0.55); backdrop-filter:blur(4px);"></div>
+            <div onclick="aiSchliessen()" style="position:absolute; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(3px);"></div>
             <!-- Dialog -->
-            <div style="position:relative; width:min(700px,96vw); height:min(600px,90vh); background:var(--mc-surface); border-radius:16px; box-shadow:0 25px 60px rgba(0,0,0,0.35); display:flex; flex-direction:column; overflow:hidden; border:1px solid var(--mc-border);">
+            <div style="position:relative; width:min(720px,96vw); max-height:calc(100vh - 90px);
+                        background:var(--mc-surface); border-radius:16px;
+                        box-shadow:0 30px 70px rgba(0,0,0,0.3); display:flex;
+                        flex-direction:column; overflow:hidden; border:1px solid var(--mc-border);">
 
                 <!-- Header -->
-                <div style="padding:1rem 1.2rem; background:linear-gradient(135deg,#16213e 0%,#1a2a50 100%); display:flex; align-items:center; gap:0.7rem; flex-shrink:0;">
-                    <i class="bi bi-stars" style="font-size:1.3rem; color:#c9a84c;"></i>
+                <div style="padding:.85rem 1.2rem; background:linear-gradient(135deg,#16213e 0%,#1a2a50 100%);
+                            display:flex; align-items:center; gap:.7rem; flex-shrink:0;">
+                    <i class="bi bi-stars" style="font-size:1.2rem; color:#c9a84c;"></i>
                     <div style="flex:1;">
-                        <div style="font-weight:700; color:#fff; font-size:.95rem;">LeasiNet KI-Assistent</div>
-                        <div style="font-size:.72rem; color:rgba(255,255,255,.55);">Fragen zur Software, Workflows und Antragsdaten</div>
+                        <div style="font-weight:700; color:#fff; font-size:.9rem;">LeasiNet KI-Assistent</div>
+                        <div style="font-size:.7rem; color:rgba(255,255,255,.5);">Workflows · Antragsdaten · Software-Fragen</div>
                     </div>
-                    <button onclick="aiSchliessen()" style="background:none; border:none; color:rgba(255,255,255,.6); cursor:pointer; font-size:1.3rem; padding:0; line-height:1;">&times;</button>
+                    <button onclick="aiSchliessen()" title="Schließen (Esc)"
+                            style="background:none; border:none; color:rgba(255,255,255,.55);
+                                   cursor:pointer; font-size:1.4rem; padding:0; line-height:1;">&times;</button>
                 </div>
 
                 <!-- Verlauf -->
-                <div id="aiVerlauf" style="flex:1; overflow-y:auto; padding:1rem 1.2rem; display:flex; flex-direction:column; gap:0.8rem;">
-                    <!-- Begrüßung -->
-                    <div class="ai-msg ai-msg-assistant">
-                        <div class="ai-msg-bubble">
-                            Hallo! Ich bin dein KI-Assistent für LeasiNet.<br>
-                            Frag mich zu <strong>Workflows</strong>, <strong>Rollen</strong>, <strong>Antragsstatus</strong> oder such nach konkreten Anträgen.<br><br>
-                            <em>Beispiele:</em>
-                            <ul style="margin:.4rem 0 0 1rem; font-size:.85rem;">
-                                <li>Zeig mir alle offenen Anträge</li>
-                                <li>Wie funktioniert die interne Kontrolle?</li>
-                                <li>Was bedeutet Status "BeiZweitemGenehmiger"?</li>
-                                <li>Wann brauche ich eine zweite Vote?</li>
-                            </ul>
-                        </div>
-                    </div>
+                <div id="aiVerlauf" style="flex:1; overflow-y:auto; padding:1rem 1.2rem;
+                                           display:flex; flex-direction:column; gap:.75rem;
+                                           min-height:120px; max-height:55vh;">
                 </div>
 
-                <!-- Eingabe -->
-                <div style="padding:.85rem 1.2rem; border-top:1px solid var(--mc-border); background:var(--mc-surface); flex-shrink:0;">
-                    <div style="display:flex; gap:.6rem; align-items:flex-end;">
-                        <textarea id="aiEingabe" rows="2" placeholder="Frage stellen… (Enter = senden, Shift+Enter = Zeilenumbruch)"
-                                  style="flex:1; resize:none; border:1px solid var(--mc-border); border-radius:10px; padding:.6rem .9rem; font-size:.88rem; background:var(--mc-bg); color:var(--mc-text); outline:none; line-height:1.4; font-family:inherit; transition:border-color .2s;"
-                                  onfocus="this.style.borderColor='var(--mc-primary)'"
-                                  onblur="this.style.borderColor='var(--mc-border)'"
-                                  onkeydown="aiKeydown(event)"></textarea>
-                        <button id="aiSendenBtn" onclick="aiSenden()"
-                                style="background:linear-gradient(135deg,#16213e,#1a3a6e); color:#fff; border:none; border-radius:10px; padding:.55rem 1.1rem; cursor:pointer; font-size:.85rem; font-weight:600; display:flex; align-items:center; gap:.4rem; white-space:nowrap; transition:opacity .2s;">
-                            <i class="bi bi-send-fill"></i> Senden
+                <!-- Eingabe im Modal (für Folgefragen) -->
+                <div style="padding:.75rem 1.1rem; border-top:1px solid var(--mc-border);
+                            background:var(--mc-surface); flex-shrink:0;">
+                    <div style="display:flex; gap:.5rem; align-items:center;">
+                        <i class="bi bi-stars" style="color:var(--mc-gold); font-size:.9rem; flex-shrink:0;"></i>
+                        <input id="aiModalEingabe" type="text"
+                               placeholder="Folgefrage stellen… (Enter senden)"
+                               style="flex:1; border:1px solid var(--mc-border); border-radius:8px;
+                                      padding:.5rem .8rem; font-size:.86rem; background:var(--mc-bg);
+                                      color:var(--mc-text); outline:none; font-family:inherit; transition:border-color .2s;"
+                               onfocus="this.style.borderColor='var(--mc-gold)'"
+                               onblur="this.style.borderColor='var(--mc-border)'"
+                               onkeydown="aiModalKeydown(event)" />
+                        <button onclick="aiSendenAusModal()"
+                                style="background:linear-gradient(135deg,#16213e,#1a3a6e); color:#fff;
+                                       border:none; border-radius:8px; padding:.5rem 1rem;
+                                       cursor:pointer; font-size:.83rem; font-weight:600;
+                                       display:flex; align-items:center; gap:.35rem; flex-shrink:0;">
+                            <i class="bi bi-send-fill"></i>
                         </button>
                     </div>
-                    <div style="font-size:.72rem; color:var(--mc-text-muted); margin-top:.4rem;">
-                        Powered by Claude AI &mdash; Antragsdaten werden automatisch einbezogen
+                    <div style="font-size:.68rem; color:var(--mc-text-muted); margin-top:.35rem; padding-left:1.4rem;">
+                        Powered by OpenAI · Antragsdaten werden automatisch einbezogen
                     </div>
                 </div>
             </div>
@@ -359,34 +366,54 @@ else
     let aiVerlauf = [];
 
     function aiOeffnen() {
-        document.getElementById('aiModal').style.display = 'flex';
-        setTimeout(() => document.getElementById('aiEingabe')?.focus(), 50);
+        const modal = document.getElementById('aiModal');
+        modal.style.display = 'flex';
+        setTimeout(() => document.getElementById('aiModalEingabe')?.focus(), 80);
     }
 
     function aiSchliessen() {
         document.getElementById('aiModal').style.display = 'none';
+        // Topbar-Feld leeren und fokussieren
+        const tb = document.getElementById('aiTopbarEingabe');
+        if (tb) { tb.value = ''; }
     }
 
-    // Strg+K / ⌘+K öffnet den Assistenten
+    // Escape schließt Modal
     document.addEventListener('keydown', function (e) {
-        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-            e.preventDefault();
-            const modal = document.getElementById('aiModal');
-            if (modal.style.display === 'none') aiOeffnen();
-            else aiSchliessen();
-        }
         if (e.key === 'Escape') aiSchliessen();
     });
 
-    function aiKeydown(e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
+    // Topbar: Enter → Modal öffnen + sofort senden
+    function aiTopbarKeydown(e) {
+        if (e.key === 'Enter') {
             e.preventDefault();
-            aiSenden();
+            const frage = document.getElementById('aiTopbarEingabe').value.trim();
+            if (!frage) return;
+            // Verlauf leeren für neue Konversation
+            aiVerlauf = [];
+            document.getElementById('aiVerlauf').innerHTML = '';
+            aiOeffnen();
+            aiSenden(frage);
         }
     }
 
+    // Modal-Eingabe: Enter → Folgefrage senden
+    function aiModalKeydown(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            aiSendenAusModal();
+        }
+    }
+
+    function aiSendenAusModal() {
+        const inp = document.getElementById('aiModalEingabe');
+        const frage = inp.value.trim();
+        if (!frage) return;
+        inp.value = '';
+        aiSenden(frage);
+    }
+
     function aiMarkdown(text) {
-        // Einfaches Markdown → HTML (bold, italic, code, ul, Absätze)
         return text
             .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
             .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
@@ -394,11 +421,10 @@ else
             .replace(/`(.+?)`/g, '<code>$1</code>')
             .replace(/^#{1,3}\s+(.+)$/gm, '<strong>$1</strong>')
             .replace(/^[-*]\s+(.+)$/gm, '<li>$1</li>')
-            .replace(/(<li>[\s\S]+?<\/li>)/g, '<ul>$1</ul>')
-            .replace(/<\/ul>\s*<ul>/g, '')
+            .replace(/(<li>.*<\/li>\n?)+/g, m => `<ul>${m}</ul>`)
             .replace(/\n\n+/g, '</p><p>')
             .replace(/\n/g, '<br>')
-            .replace(/^(.+)$/, '<p>$1</p>');
+            .replace(/^(?!<)(.+)/, '<p>$1</p>');
     }
 
     function aiNachrichtAppend(rolle, html) {
@@ -411,28 +437,19 @@ else
         return div;
     }
 
-    async function aiSenden() {
-        const eingabe = document.getElementById('aiEingabe');
-        const frage = eingabe.value.trim();
+    async function aiSenden(frage) {
         if (!frage) return;
-
-        eingabe.value = '';
-        eingabe.style.height = 'auto';
 
         // User-Nachricht anzeigen
         aiNachrichtAppend('user', aiMarkdown(frage));
 
         // Tipp-Indikator
+        const verlaufEl = document.getElementById('aiVerlauf');
         const typing = document.createElement('div');
         typing.className = 'ai-msg ai-msg-assistant';
-        typing.innerHTML = '<div class="ai-typing"><div class="ai-typing-dot"></div><div class="ai-typing-dot"></div><div class="ai-typing-dot"></div><span>KI denkt nach…</span></div>';
-        const verlauf = document.getElementById('aiVerlauf');
-        verlauf.appendChild(typing);
-        verlauf.scrollTop = verlauf.scrollHeight;
-
-        const btn = document.getElementById('aiSendenBtn');
-        btn.disabled = true;
-        btn.style.opacity = '0.5';
+        typing.innerHTML = '<div class="ai-typing"><div class="ai-typing-dot"></div><div class="ai-typing-dot"></div><div class="ai-typing-dot"></div><span>Wird geladen…</span></div>';
+        verlaufEl.appendChild(typing);
+        verlaufEl.scrollTop = verlaufEl.scrollHeight;
 
         try {
             const res = await fetch('/AiAssistent/Fragen', {
@@ -441,26 +458,23 @@ else
                 body: JSON.stringify({ frage, verlauf: aiVerlauf })
             });
             const data = await res.json();
-
-            verlauf.removeChild(typing);
+            verlaufEl.removeChild(typing);
 
             if (data.error) {
-                aiNachrichtAppend('assistant', `<span style="color:#e74c3c;"><i class="bi bi-exclamation-triangle"></i> ${data.error}</span>`);
+                aiNachrichtAppend('assistant',
+                    `<span style="color:#e74c3c;"><i class="bi bi-exclamation-triangle"></i> ${data.error}</span>`);
             } else {
-                // Verlauf für Kontext speichern
                 aiVerlauf.push({ rolle: 'user', text: frage });
                 aiVerlauf.push({ rolle: 'assistant', text: data.antwort });
-                // Nur letzte 10 Nachrichten (5 Runden) behalten
                 if (aiVerlauf.length > 10) aiVerlauf = aiVerlauf.slice(-10);
                 aiNachrichtAppend('assistant', aiMarkdown(data.antwort));
             }
         } catch {
-            verlauf.removeChild(typing);
-            aiNachrichtAppend('assistant', '<span style="color:#e74c3c;">Verbindungsfehler. Bitte versuche es erneut.</span>');
+            verlaufEl.removeChild(typing);
+            aiNachrichtAppend('assistant',
+                '<span style="color:#e74c3c;">Verbindungsfehler. Bitte versuche es erneut.</span>');
         } finally {
-            btn.disabled = false;
-            btn.style.opacity = '1';
-            eingabe.focus();
+            document.getElementById('aiModalEingabe')?.focus();
         }
     }
 </script>
