@@ -1,0 +1,67 @@
+@model IEnumerable<LeasiNetWeb.Application.DTOs.LeasinggesellschaftListeDto>
+@{
+    ViewData["Title"] = "Leasinggesellschaften";
+}
+
+<div class="mc-page-header">
+    <div>
+        <div style="font-size:0.82rem; color:var(--mc-text-muted); margin-bottom:0.4rem;">
+            <a asp-action="Index" style="color:var(--mc-primary);">Administration</a>
+            <span style="margin:0 0.4rem;">/</span><span>Leasinggesellschaften</span>
+        </div>
+        <h1 class="mc-page-title"><i class="bi bi-bank me-2"></i>Leasinggesellschaften</h1>
+    </div>
+    <a asp-action="LeasinggesellschaftNeu" class="btn-mc-primary">
+        <i class="bi bi-plus-circle"></i> Neue Gesellschaft
+    </a>
+</div>
+
+<div class="mc-card">
+    <div style="padding:0;">
+        <div class="mc-table-wrapper">
+            <table class="mc-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Kürzel</th>
+                        <th>E-Mail</th>
+                        <th>Telefon</th>
+                        <th style="text-align:right;">Obligo-Limit</th>
+                        <th style="text-align:center;">Benutzer</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var l in Model)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@l.Name</td>
+                            <td><code>@(l.Kurzbezeichnung ?? "–")</code></td>
+                            <td style="font-size:0.83rem;">@(l.EMail ?? "–")</td>
+                            <td style="font-size:0.83rem;">@(l.Telefon ?? "–")</td>
+                            <td style="text-align:right;" class="text-currency">@l.ObligoLimit.ToString("N0") €</td>
+                            <td style="text-align:center;">@l.AnzahlBenutzer</td>
+                            <td>
+                                @if (l.IstAktiv)
+                                {
+                                    <span class="mc-badge badge-success">Aktiv</span>
+                                }
+                                else
+                                {
+                                    <span class="mc-badge badge-secondary">Inaktiv</span>
+                                }
+                            </td>
+                            <td>
+                                <a asp-action="LeasinggesellschaftBearbeiten" asp-route-id="@l.Id"
+                                   class="btn-mc-ghost" style="font-size:0.78rem; padding:0.3rem 0.6rem;">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

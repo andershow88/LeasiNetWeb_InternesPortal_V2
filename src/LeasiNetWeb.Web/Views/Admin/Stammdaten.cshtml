@@ -1,0 +1,245 @@
+@using LeasiNetWeb.Application.DTOs
+@using LeasiNetWeb.Web.ViewModels
+@{
+    ViewData["Title"] = "Stammdaten";
+    var ablehnungsgruende = (ViewBag.Ablehnungsgruende as IEnumerable<AblehnungsgrundDto>)
+        ?? Enumerable.Empty<AblehnungsgrundDto>();
+    var geraetetypen = (ViewBag.Geraetetypen as IEnumerable<GeraetetypDto>)
+        ?? Enumerable.Empty<GeraetetypDto>();
+}
+
+<div class="mc-page-header">
+    <div>
+        <div style="font-size:0.82rem; color:var(--mc-text-muted); margin-bottom:0.4rem;">
+            <a asp-action="Index" style="color:var(--mc-primary);">Administration</a>
+            <span style="margin:0 0.4rem;">/</span><span>Stammdaten</span>
+        </div>
+        <h1 class="mc-page-title"><i class="bi bi-table me-2"></i>Stammdaten</h1>
+    </div>
+</div>
+
+<div class="row g-4">
+
+    <!-- ── Ablehnungsgründe ───────────────────────────────────────────────── -->
+    <div class="col-lg-6">
+        <div class="mc-card">
+            <div class="mc-card-header">
+                <h2 class="mc-card-title"><i class="bi bi-x-circle"></i> Ablehnungsgründe</h2>
+                <button class="btn-mc-ghost" style="font-size:0.8rem;"
+                        data-bs-toggle="modal" data-bs-target="#neuerAblehnungsgrundModal">
+                    <i class="bi bi-plus"></i> Hinzufügen
+                </button>
+            </div>
+            <div style="padding:0;">
+                <table class="mc-table">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Bezeichnung</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var ag in ablehnungsgruende)
+                        {
+                            <tr>
+                                <td><code>@ag.Code</code></td>
+                                <td>@ag.Bezeichnung</td>
+                                <td>
+                                    @if (ag.IstAktiv)
+                                    {
+                                        <span class="mc-badge badge-success">Aktiv</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="mc-badge badge-secondary">Inaktiv</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-1">
+                                        <button class="btn-mc-ghost" style="font-size:0.75rem; padding:0.25rem 0.5rem;"
+                                                onclick="editAblehnungsgrund(@ag.Id, '@ag.Code', '@ag.Bezeichnung.Replace("'", "\\'")', @ag.IstAktiv.ToString().ToLower())"
+                                                title="Bearbeiten">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <form asp-action="AblehnungsgrundLoeschen" asp-route-id="@ag.Id" method="post" style="display:inline;">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn-mc-ghost"
+                                                    style="font-size:0.75rem; padding:0.25rem 0.5rem; color:#b05050;"
+                                                    title="Löschen"
+                                                    onclick="return confirm('Ablehnungsgrund löschen?')">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Gerätetypen ────────────────────────────────────────────────────── -->
+    <div class="col-lg-6">
+        <div class="mc-card">
+            <div class="mc-card-header">
+                <h2 class="mc-card-title"><i class="bi bi-cpu"></i> Gerätetypen</h2>
+                <button class="btn-mc-ghost" style="font-size:0.8rem;"
+                        data-bs-toggle="modal" data-bs-target="#neuerGeraetetypModal">
+                    <i class="bi bi-plus"></i> Hinzufügen
+                </button>
+            </div>
+            <div style="padding:0;">
+                <table class="mc-table">
+                    <thead>
+                        <tr>
+                            <th>Bezeichnung</th>
+                            <th>Kategorie</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var g in geraetetypen)
+                        {
+                            <tr>
+                                <td>@g.Bezeichnung</td>
+                                <td style="color:var(--mc-text-muted); font-size:0.82rem;">@(g.Elterntyp ?? "–")</td>
+                                <td>
+                                    @if (g.IstAktiv)
+                                    {
+                                        <span class="mc-badge badge-success">Aktiv</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="mc-badge badge-secondary">Inaktiv</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-1">
+                                        <button class="btn-mc-ghost" style="font-size:0.75rem; padding:0.25rem 0.5rem;"
+                                                onclick="editGeraetetyp(@g.Id, '@g.Bezeichnung.Replace("'", "\\'")', @(g.ElterntypId?.ToString() ?? "null"), @g.IstAktiv.ToString().ToLower())"
+                                                title="Bearbeiten">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <form asp-action="GeraetetypLoeschen" asp-route-id="@g.Id" method="post" style="display:inline;">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn-mc-ghost"
+                                                    style="font-size:0.75rem; padding:0.25rem 0.5rem; color:#b05050;"
+                                                    title="Löschen"
+                                                    onclick="return confirm('Gerätetyp löschen?')">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Modal: Ablehnungsgrund ─────────────────────────────────────────────── -->
+<div class="modal fade" id="neuerAblehnungsgrundModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="AblehnungsgrundSpeichern" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" id="agId" value="0" />
+                <div class="modal-header">
+                    <h5 class="modal-title" id="agModalTitle">Ablehnungsgrund hinzufügen</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="mc-info-label">Code</label>
+                        <input name="Code" id="agCode" class="form-control form-control-sm"
+                               placeholder="z.B. BONITÄT" required maxlength="50" style="text-transform:uppercase;" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="mc-info-label">Bezeichnung</label>
+                        <input name="Bezeichnung" id="agBezeichnung" class="form-control form-control-sm"
+                               placeholder="z.B. Unzureichende Bonität" required maxlength="300" />
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" name="IstAktiv" id="agIstAktiv" class="form-check-input" value="true" checked />
+                        <label class="form-check-label small" for="agIstAktiv">Aktiv</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-mc-ghost" data-bs-dismiss="modal">Abbrechen</button>
+                    <button type="submit" class="btn-mc-primary"><i class="bi bi-check-lg"></i> Speichern</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ── Modal: Gerätetyp ───────────────────────────────────────────────────── -->
+<div class="modal fade" id="neuerGeraetetypModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="GeraetetypSpeichern" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" id="gtId" value="0" />
+                <div class="modal-header">
+                    <h5 class="modal-title" id="gtModalTitle">Gerätetyp hinzufügen</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="mc-info-label">Bezeichnung</label>
+                        <input name="Bezeichnung" id="gtBezeichnung" class="form-control form-control-sm"
+                               required maxlength="200" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="mc-info-label">Übergeordnete Kategorie</label>
+                        <select name="ElterntypId" id="gtElterntypId" class="form-select form-select-sm">
+                            <option value="">– keine (Hauptkategorie) –</option>
+                            @foreach (var g in geraetetypen.Where(g => g.ElterntypId == null))
+                            {
+                                <option value="@g.Id">@g.Bezeichnung</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" name="IstAktiv" id="gtIstAktiv" class="form-check-input" value="true" checked />
+                        <label class="form-check-label small" for="gtIstAktiv">Aktiv</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-mc-ghost" data-bs-dismiss="modal">Abbrechen</button>
+                    <button type="submit" class="btn-mc-primary"><i class="bi bi-check-lg"></i> Speichern</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function editAblehnungsgrund(id, code, bezeichnung, istAktiv) {
+    document.getElementById('agId').value = id;
+    document.getElementById('agCode').value = code;
+    document.getElementById('agBezeichnung').value = bezeichnung;
+    document.getElementById('agIstAktiv').checked = istAktiv;
+    document.getElementById('agModalTitle').textContent = 'Ablehnungsgrund bearbeiten';
+    new bootstrap.Modal(document.getElementById('neuerAblehnungsgrundModal')).show();
+}
+
+function editGeraetetyp(id, bezeichnung, elterntypId, istAktiv) {
+    document.getElementById('gtId').value = id;
+    document.getElementById('gtBezeichnung').value = bezeichnung;
+    document.getElementById('gtElterntypId').value = elterntypId ?? '';
+    document.getElementById('gtIstAktiv').checked = istAktiv;
+    document.getElementById('gtModalTitle').textContent = 'Gerätetyp bearbeiten';
+    new bootstrap.Modal(document.getElementById('neuerGeraetetypModal')).show();
+}
+</script>
+}

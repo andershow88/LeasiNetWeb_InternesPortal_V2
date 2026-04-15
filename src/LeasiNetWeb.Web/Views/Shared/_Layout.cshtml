@@ -71,7 +71,16 @@
                     <i class="bi bi-archive"></i> Archiv
                 </a>
             </li>
-            <li class="mc-nav-item" style="margin-top:0.5rem; border-top:1px solid var(--mc-border); padding-top:0.5rem;">
+            @if (User.HasClaim("Rolle", "Administrator"))
+            {
+                <li class="mc-nav-item" style="margin-top:0.5rem; border-top:1px solid var(--mc-border); padding-top:0.5rem;">
+                    <a asp-controller="Admin" asp-action="Index"
+                       class="mc-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" ? "active" : "")">
+                        <i class="bi bi-shield-lock"></i> Administration
+                    </a>
+                </li>
+            }
+            <li class="mc-nav-item" style="@(User.HasClaim("Rolle", "Administrator") ? "" : "margin-top:0.5rem; border-top:1px solid var(--mc-border); padding-top:0.5rem;")">
                 <a asp-controller="Nachrichten" asp-action="Index"
                    class="mc-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Nachrichten" ? "active" : "")">
                     <i class="bi bi-envelope"></i> Nachrichten

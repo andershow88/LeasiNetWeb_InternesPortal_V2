@@ -1,0 +1,95 @@
+@model LeasiNetWeb.Web.ViewModels.LeasinggesellschaftFormViewModel
+@{
+    bool istNeu = Model.Id == 0;
+    ViewData["Title"] = istNeu ? "Neue Leasinggesellschaft" : "Leasinggesellschaft bearbeiten";
+}
+
+<div class="mc-page-header">
+    <div>
+        <div style="font-size:0.82rem; color:var(--mc-text-muted); margin-bottom:0.4rem;">
+            <a asp-action="Index" style="color:var(--mc-primary);">Administration</a>
+            <span style="margin:0 0.4rem;">/</span>
+            <a asp-action="Leasinggesellschaften" style="color:var(--mc-primary);">Leasinggesellschaften</a>
+            <span style="margin:0 0.4rem;">/</span>
+            <span>@(istNeu ? "Neu" : Model.Name)</span>
+        </div>
+        <h1 class="mc-page-title"><i class="bi bi-bank me-2"></i>@ViewData["Title"]</h1>
+    </div>
+</div>
+
+<div class="mc-card" style="max-width:720px;">
+    <div class="mc-card-body">
+        <form asp-action="LeasinggesellschaftSpeichern" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small mb-3"></div>
+
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <label asp-for="Name" class="mc-info-label"></label>
+                    <input asp-for="Name" class="form-control form-control-sm" />
+                    <span asp-validation-for="Name" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Kurzbezeichnung" class="mc-info-label"></label>
+                    <input asp-for="Kurzbezeichnung" class="form-control form-control-sm" />
+                </div>
+                <div class="col-md-8">
+                    <label asp-for="Strasse" class="mc-info-label"></label>
+                    <input asp-for="Strasse" class="form-control form-control-sm" />
+                </div>
+                <div class="col-md-2">
+                    <label asp-for="PLZ" class="mc-info-label"></label>
+                    <input asp-for="PLZ" class="form-control form-control-sm" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Ort" class="mc-info-label"></label>
+                    <input asp-for="Ort" class="form-control form-control-sm" />
+                </div>
+                <div class="col-md-2">
+                    <label asp-for="Land" class="mc-info-label"></label>
+                    <input asp-for="Land" class="form-control form-control-sm" value="@(Model.Land ?? "DE")" />
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="EMail" class="mc-info-label"></label>
+                    <input asp-for="EMail" class="form-control form-control-sm" type="email" />
+                    <span asp-validation-for="EMail" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Telefon" class="mc-info-label"></label>
+                    <input asp-for="Telefon" class="form-control form-control-sm" />
+                </div>
+                <div class="col-12">
+                    <label asp-for="Ansprechpartner" class="mc-info-label"></label>
+                    <input asp-for="Ansprechpartner" class="form-control form-control-sm" />
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="ObligoLimit" class="mc-info-label"></label>
+                    <div class="input-group input-group-sm">
+                        <input asp-for="ObligoLimit" class="form-control form-control-sm" type="number" step="1000" min="0" />
+                        <span class="input-group-text">€</span>
+                    </div>
+                    <span asp-validation-for="ObligoLimit" class="text-danger small"></span>
+                </div>
+                <div class="col-12">
+                    <div class="form-check">
+                        <input asp-for="IstAktiv" class="form-check-input" />
+                        <label asp-for="IstAktiv" class="form-check-label small">Gesellschaft ist aktiv</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn-mc-primary">
+                    <i class="bi bi-check-lg"></i> Speichern
+                </button>
+                <a asp-action="Leasinggesellschaften" class="btn-mc-ghost">Abbrechen</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

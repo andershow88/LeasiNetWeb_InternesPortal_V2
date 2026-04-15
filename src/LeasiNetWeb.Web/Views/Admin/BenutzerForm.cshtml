@@ -1,0 +1,99 @@
+@model LeasiNetWeb.Web.ViewModels.BenutzerFormViewModel
+@{
+    bool istNeu = Model.Id == 0;
+    ViewData["Title"] = istNeu ? "Neuer Benutzer" : "Benutzer bearbeiten";
+}
+
+<div class="mc-page-header">
+    <div>
+        <div style="font-size:0.82rem; color:var(--mc-text-muted); margin-bottom:0.4rem;">
+            <a asp-action="Index" style="color:var(--mc-primary);">Administration</a>
+            <span style="margin:0 0.4rem;">/</span>
+            <a asp-action="Benutzer" style="color:var(--mc-primary);">Benutzer</a>
+            <span style="margin:0 0.4rem;">/</span>
+            <span>@(istNeu ? "Neu" : Model.Benutzername)</span>
+        </div>
+        <h1 class="mc-page-title">
+            <i class="bi bi-person-gear me-2"></i>@ViewData["Title"]
+        </h1>
+    </div>
+</div>
+
+<div class="mc-card" style="max-width:680px;">
+    <div class="mc-card-body">
+        <form asp-action="BenutzerSpeichern" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small mb-3"></div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="Vorname" class="mc-info-label"></label>
+                    <input asp-for="Vorname" class="form-control form-control-sm" />
+                    <span asp-validation-for="Vorname" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Nachname" class="mc-info-label"></label>
+                    <input asp-for="Nachname" class="form-control form-control-sm" />
+                    <span asp-validation-for="Nachname" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Benutzername" class="mc-info-label"></label>
+                    <input asp-for="Benutzername" class="form-control form-control-sm" autocomplete="off" />
+                    <span asp-validation-for="Benutzername" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="EMail" class="mc-info-label"></label>
+                    <input asp-for="EMail" class="form-control form-control-sm" type="email" />
+                    <span asp-validation-for="EMail" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Rolle" class="mc-info-label"></label>
+                    <select asp-for="Rolle" asp-items="Html.GetEnumSelectList<LeasiNetWeb.Domain.Enums.BenutzerRolle>()"
+                            class="form-select form-select-sm"></select>
+                    <span asp-validation-for="Rolle" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="LeasinggesellschaftId" class="mc-info-label"></label>
+                    <select asp-for="LeasinggesellschaftId" asp-items="Model.LeasinggesellschaftenListe"
+                            class="form-select form-select-sm">
+                        <option value="">– keine –</option>
+                    </select>
+                    <div class="small mt-1" style="color:var(--mc-text-muted);">Nur für Rollen SachbearbeiterLG</div>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Passwort" class="mc-info-label">
+                        @(istNeu ? "Passwort *" : "Neues Passwort (leer = keine Änderung)")
+                    </label>
+                    <input asp-for="Passwort" class="form-control form-control-sm"
+                           type="password" autocomplete="new-password" />
+                    <span asp-validation-for="Passwort" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="PasswortBestaetigen" class="mc-info-label"></label>
+                    <input asp-for="PasswortBestaetigen" class="form-control form-control-sm"
+                           type="password" autocomplete="new-password" />
+                    <span asp-validation-for="PasswortBestaetigen" class="text-danger small"></span>
+                </div>
+                <div class="col-12">
+                    <div class="form-check">
+                        <input asp-for="IstAktiv" class="form-check-input" />
+                        <label asp-for="IstAktiv" class="form-check-label small">Benutzer ist aktiv</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn-mc-primary">
+                    <i class="bi bi-check-lg"></i> Speichern
+                </button>
+                <a asp-action="Benutzer" class="btn-mc-ghost">Abbrechen</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

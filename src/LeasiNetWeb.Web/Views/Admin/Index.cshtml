@@ -1,0 +1,61 @@
+@{
+    ViewData["Title"] = "Administration";
+}
+
+<div class="mc-page-header">
+    <div>
+        <h1 class="mc-page-title"><i class="bi bi-shield-lock me-2"></i>Administration</h1>
+        <p class="mc-page-subtitle">Systemverwaltung und Konfiguration</p>
+    </div>
+</div>
+
+<div class="mc-kpi-grid" style="grid-template-columns: repeat(auto-fill, minmax(180px,1fr));">
+    <a asp-action="Benutzer" class="mc-kpi-card text-decoration-none">
+        <div class="mc-kpi-icon blue"><i class="bi bi-people"></i></div>
+        <div class="mc-kpi-label">Benutzer gesamt</div>
+        <div class="mc-kpi-value">@ViewBag.AnzahlBenutzer</div>
+        <div class="mc-kpi-sub">@ViewBag.AnzahlAktiveBenutzer aktiv</div>
+    </a>
+    <a asp-action="Leasinggesellschaften" class="mc-kpi-card text-decoration-none">
+        <div class="mc-kpi-icon green"><i class="bi bi-bank"></i></div>
+        <div class="mc-kpi-label">Leasinggesellschaften</div>
+        <div class="mc-kpi-value">@ViewBag.AnzahlLG</div>
+        <div class="mc-kpi-sub">@ViewBag.AnzahlAktiveLG aktiv</div>
+    </a>
+    <a asp-action="Stammdaten" class="mc-kpi-card text-decoration-none">
+        <div class="mc-kpi-icon gold"><i class="bi bi-table"></i></div>
+        <div class="mc-kpi-label">Stammdaten</div>
+        <div class="mc-kpi-value"><i class="bi bi-pencil-square" style="font-size:1.3rem;"></i></div>
+        <div class="mc-kpi-sub">Ablehngründe, Gerätetypen</div>
+    </a>
+</div>
+
+<div class="row g-3 mt-1">
+    <div class="col-md-4">
+        <div class="mc-card">
+            <div class="mc-card-header"><h2 class="mc-card-title"><i class="bi bi-people"></i> Benutzerverwaltung</h2></div>
+            <div class="mc-card-body">
+                <p style="color:var(--mc-text-muted); font-size:0.85rem;">Benutzerkonten anlegen, Rollen zuweisen, aktivieren oder deaktivieren.</p>
+                <a asp-action="Benutzer" class="btn-mc-primary"><i class="bi bi-arrow-right"></i> Öffnen</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="mc-card">
+            <div class="mc-card-header"><h2 class="mc-card-title"><i class="bi bi-bank"></i> Leasinggesellschaften</h2></div>
+            <div class="mc-card-body">
+                <p style="color:var(--mc-text-muted); font-size:0.85rem;">Partner-Leasinggesellschaften verwalten, Obligo-Limits festlegen.</p>
+                <a asp-action="Leasinggesellschaften" class="btn-mc-primary"><i class="bi bi-arrow-right"></i> Öffnen</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="mc-card">
+            <div class="mc-card-header"><h2 class="mc-card-title"><i class="bi bi-table"></i> Stammdaten</h2></div>
+            <div class="mc-card-body">
+                <p style="color:var(--mc-text-muted); font-size:0.85rem;">Ablehnungsgründe und Gerätetypen konfigurieren.</p>
+                <a asp-action="Stammdaten" class="btn-mc-primary"><i class="bi bi-arrow-right"></i> Öffnen</a>
+            </div>
+        </div>
+    </div>
+</div>
