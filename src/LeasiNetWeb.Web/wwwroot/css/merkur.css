@@ -667,14 +667,14 @@ a:hover { text-decoration: underline; }
 
 .mc-login-wrapper {
     width: 100%;
-    max-width: 440px;
+    max-width: 560px;
     padding: 1rem;
 }
 
 .mc-login-card {
     background: var(--mc-white);
-    border-radius: 16px;
-    padding: 2.5rem 2.25rem;
+    border-radius: 18px;
+    padding: 2.5rem 2.75rem;
     box-shadow: 0 20px 60px rgba(0,0,0,0.15);
 }
 
@@ -761,16 +761,74 @@ a:hover { text-decoration: underline; }
 }
 
 .mc-login-demo-box {
-    background: #f7f7f7;
     border: 1px solid var(--mc-border);
-    border-radius: var(--mc-radius-sm);
-    padding: 0.75rem 1rem;
+    border-radius: 12px;
     margin-top: 1.5rem;
-    font-size: 0.78rem;
-    color: var(--mc-text-muted);
+    overflow: hidden;
 }
 
-.mc-login-demo-box strong { color: var(--mc-text); }
+.mc-login-demo-box-header {
+    background: var(--mc-primary);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 0.5rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.mc-login-demo-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+}
+
+.mc-login-demo-entry {
+    padding: 0.55rem 1rem;
+    border-bottom: 1px solid var(--mc-border);
+    font-size: 0.78rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.mc-login-demo-entry:nth-child(odd) {
+    border-right: 1px solid var(--mc-border);
+}
+
+.mc-login-demo-entry:nth-last-child(-n+2) {
+    border-bottom: none;
+}
+
+.mc-login-demo-role {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--mc-text-muted);
+    margin-bottom: 0.15rem;
+}
+
+.mc-login-demo-creds {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.mc-login-demo-creds span {
+    font-family: monospace;
+    font-size: 0.8rem;
+    color: var(--mc-text);
+    cursor: pointer;
+    transition: color 0.15s;
+}
+
+.mc-login-demo-creds span:hover {
+    color: var(--mc-primary);
+}
 
 /* ============================================================
    HILFE / KONTAKT
@@ -1012,12 +1070,14 @@ a:hover { text-decoration: underline; }
 }
 
 [data-theme="dark"] .mc-login-demo-box {
-    background: #16162a;
     border-color: var(--mc-border);
-    color: var(--mc-text-muted);
 }
 
-[data-theme="dark"] .mc-login-demo-box strong {
+[data-theme="dark"] .mc-login-demo-entry {
+    border-color: var(--mc-border);
+}
+
+[data-theme="dark"] .mc-login-demo-creds span {
     color: var(--mc-text);
 }
 
