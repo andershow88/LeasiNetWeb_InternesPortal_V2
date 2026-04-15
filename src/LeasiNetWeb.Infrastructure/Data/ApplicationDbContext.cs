@@ -1,12 +1,16 @@
 using LeasiNetWeb.Application.Interfaces;
 using LeasiNetWeb.Domain.Entities;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace LeasiNetWeb.Infrastructure.Data;
 
-public class ApplicationDbContext : DbContext, IApplicationDbContext
+public class ApplicationDbContext : DbContext, IApplicationDbContext, IDataProtectionKeyContext
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
+
+    // DataProtection keys — persisted in DB so they survive container restarts
+    public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
 
     public DbSet<Benutzer> Benutzer => Set<Benutzer>();
     public DbSet<Leasinggesellschaft> Leasinggesellschaften => Set<Leasinggesellschaft>();

@@ -7,6 +7,7 @@ using IAdminService = LeasiNetWeb.Application.Interfaces.IAdminService;
 using AdminService = LeasiNetWeb.Application.Services.AdminService;
 using LeasiNetWeb.Infrastructure.Data;
 using AnhangServiceImpl = LeasiNetWeb.Infrastructure.Data.AnhangService;
+using Microsoft.AspNetCore.DataProtection;
 using LeasiNetWeb.Infrastructure.Jobs;
 using Microsoft.EntityFrameworkCore;
 
@@ -114,6 +115,10 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("InternerPruefer", p => p.RequireClaim("Rolle", "InternerPruefer", "Administrator"));
     options.AddPolicy("Auswerter", p => p.RequireClaim("Rolle", "Auswerter", "Administrator"));
 });
+
+// ── DataProtection: persist keys in DB so sessions survive container restarts ─
+builder.Services.AddDataProtection()
+    .PersistKeysToDbContext<ApplicationDbContext>();
 
 builder.Services.AddHttpContextAccessor();
 Checkpoint("7 – auth registered");
