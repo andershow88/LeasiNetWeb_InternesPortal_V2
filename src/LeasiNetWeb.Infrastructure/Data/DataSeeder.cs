@@ -15,8 +15,33 @@ public static class DataSeeder
         if (!await db.Benutzer.AnyAsync())
             await SeedStammdatenAsync(db);
 
+        // Ensure all 5 demo LGs exist (safe to run on existing deployments)
+        await SeedFehlendeLeasinggesellschaftenAsync(db);
+
         if (!await db.Leasingantraege.AnyAsync())
             await SeedDemoAntraegeAsync(db);
+    }
+
+    // ── Fehlende Leasinggesellschaften nachträglich hinzufügen ────────────────
+    private static async Task SeedFehlendeLeasinggesellschaftenAsync(ApplicationDbContext db)
+    {
+        var vorhandeneKuerzel = await db.Leasinggesellschaften
+            .Select(l => l.Kurzbezeichnung)
+            .ToListAsync();
+
+        var neu = new List<Leasinggesellschaft>();
+        if (!vorhandeneKuerzel.Contains("DL-AG"))
+            neu.Add(new() { Name = "Deutsche Leasing AG", Kurzbezeichnung = "DL-AG", Land = "DE", EMail = "kontakt@deutsche-leasing.de", ObligoLimit = 8_000_000, IstAktiv = true, ErstelltAm = Ts, GeaendertAm = Ts });
+        if (!vorhandeneKuerzel.Contains("VR-LG"))
+            neu.Add(new() { Name = "VR Leasing GmbH",    Kurzbezeichnung = "VR-LG", Land = "DE", EMail = "service@vrleasing.de",        ObligoLimit = 3_500_000, IstAktiv = true, ErstelltAm = Ts, GeaendertAm = Ts });
+        if (!vorhandeneKuerzel.Contains("GR-AG"))
+            neu.Add(new() { Name = "Grenke Leasing AG",  Kurzbezeichnung = "GR-AG", Land = "DE", EMail = "info@grenke.de",              ObligoLimit = 4_000_000, IstAktiv = true, ErstelltAm = Ts, GeaendertAm = Ts });
+
+        if (neu.Any())
+        {
+            db.Leasinggesellschaften.AddRange(neu);
+            await db.SaveChangesAsync();
+        }
     }
 
     // ── Stammdaten & Benutzer (einmalig) ─────────────────────────────────────
