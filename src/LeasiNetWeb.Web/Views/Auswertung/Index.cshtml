@@ -1,0 +1,441 @@
+@using LeasiNetWeb.Application.DTOs
+@using LeasiNetWeb.Domain.Enums
+@using System.Text.Json
+@model AuswertungDto
+@{
+    ViewData["Title"] = "Auswertung";
+    var verfuegbareJahre = ViewBag.VerfuegbareJahre as List<int> ?? new List<int>();
+
+    // JSON for charts
+    var monatLabels    = JsonSerializer.Serialize(Model.AntraegeProMonat.Select(m => m.MonatLabel));
+    var monatAnzahl    = JsonSerializer.Serialize(Model.AntraegeProMonat.Select(m => m.AnzahlAntraege));
+    var monatObligo    = JsonSerializer.Serialize(Model.AntraegeProMonat.Select(m => m.ObligoSumme));
+    var statusLabels   = JsonSerializer.Serialize(Model.AntraegeNachStatus.Select(s => s.Status.ToString()));
+    var statusWerte    = JsonSerializer.Serialize(Model.AntraegeNachStatus.Select(s => s.Anzahl));
+    var typLabels      = JsonSerializer.Serialize(Model.AntraegeNachTyp.Select(t => t.Typ));
+    var typWerte       = JsonSerializer.Serialize(Model.AntraegeNachTyp.Select(t => t.Anzahl));
+    var lgLabels       = JsonSerializer.Serialize(Model.ObligoProLg.Select(l => l.Name));
+    var lgObligo       = JsonSerializer.Serialize(Model.ObligoProLg.Select(l => l.ObligoSumme));
+    var lgLimit        = JsonSerializer.Serialize(Model.ObligoProLg.Select(l => l.ObligoLimit));
+    var vtgLabels      = JsonSerializer.Serialize(Model.VertraegeNachStatus.Select(s => StatusLabel(s.Status)));
+    var vtgWerte       = JsonSerializer.Serialize(Model.VertraegeNachStatus.Select(s => s.Anzahl));
+}
+
+<div class="mc-page-header">
+    <div>
+        <h1 class="mc-page-title"><i class="bi bi-bar-chart-line me-2"></i>Auswertung</h1>
+    </div>
+    <div class="d-flex gap-2 align-items-center flex-wrap">
+        <!-- Jahr-Filter -->
+        <form method="get" class="d-flex gap-2 align-items-center">
+            <select name="jahr" class="form-select form-select-sm" style="width:auto;"
+                    onchange="this.form.submit()">
+                @foreach (var j in verfuegbareJahre)
+                {
+                    if (j == Model.Jahr)
+                    {
+                        <option value="@j" selected="selected">@j</option>
+                    }
+                    else
+                    {
+                        <option value="@j">@j</option>
+                    }
+                }
+            </select>
+        </form>
+        <!-- Exports -->
+        <a asp-action="AntraegeCsv" asp-route-jahr="@Model.Jahr"
+           class="btn-mc-ghost" style="font-size:0.82rem;">
+            <i class="bi bi-download me-1"></i>Anträge CSV
+        </a>
+        <a asp-action="VertraegeCsv"
+           class="btn-mc-ghost" style="font-size:0.82rem;">
+            <i class="bi bi-download me-1"></i>Verträge CSV
+        </a>
+    </div>
+</div>
+
+<!-- ── KPI-Kacheln ──────────────────────────────────────────────────────────── -->
+<div class="mc-kpi-grid mb-4">
+    <div class="mc-kpi-card">
+        <div class="mc-kpi-label">Anträge gesamt</div>
+        <div class="mc-kpi-value">@Model.AntraegeGesamt</div>
+        <div class="mc-kpi-sub">davon @Model.Jahr: @Model.AntraegeProMonat.Sum(m => m.AnzahlAntraege)</div>
+    </div>
+    <div class="mc-kpi-card">
+        <div class="mc-kpi-label">Genehmigt</div>
+        <div class="mc-kpi-value" style="color:var(--mc-success, #28a745);">@Model.AntraegeGenehmigt</div>
+        <div class="mc-kpi-sub">@(Model.AntraegeGesamt > 0 ? $"{Model.AntraegeGenehmigt * 100 / Model.AntraegeGesamt} %" : "–") Genehmigungsquote</div>
+    </div>
+    <div class="mc-kpi-card">
+        <div class="mc-kpi-label">Offen</div>
+        <div class="mc-kpi-value" style="color:var(--mc-warning, #ffc107);">@Model.AntraegeOffen</div>
+        <div class="mc-kpi-sub">in Bearbeitung</div>
+    </div>
+    <div class="mc-kpi-card">
+        <div class="mc-kpi-label">Obligo aktiv</div>
+        <div class="mc-kpi-value">@Model.GesamtObligoAktiv.ToString("N0") €</div>
+        <div class="mc-kpi-sub">genehmigte Anträge</div>
+    </div>
+    <div class="mc-kpi-card">
+        <div class="mc-kpi-label">Verträge aktiv</div>
+        <div class="mc-kpi-value" style="color:var(--mc-success, #28a745);">@Model.VertraegeAktiv</div>
+        <div class="mc-kpi-sub">von @Model.VertraegeGesamt gesamt</div>
+    </div>
+    <div class="mc-kpi-card">
+        <div class="mc-kpi-label">Finanzierungsvolumen</div>
+        <div class="mc-kpi-value">@Model.GesamtFinanzierungsvolumen.ToString("N0") €</div>
+        <div class="mc-kpi-sub">alle Verträge</div>
+    </div>
+</div>
+
+<div class="row g-4">
+
+    <!-- ── Monatliche Antragsent­wicklung ──────────────────────────────────── -->
+    <div class="col-12">
+        <div class="mc-card">
+            <div class="mc-card-header">
+                <h2 class="mc-card-title"><i class="bi bi-graph-up"></i> Monatliche Entwicklung @Model.Jahr</h2>
+            </div>
+            <div class="mc-card-body" style="position:relative; height:260px;">
+                <canvas id="chartMonatlich"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Antragsstatus ─────────────────────────────────────────────────────── -->
+    <div class="col-lg-4">
+        <div class="mc-card h-100">
+            <div class="mc-card-header">
+                <h2 class="mc-card-title"><i class="bi bi-pie-chart"></i> Anträge nach Status</h2>
+            </div>
+            <div class="mc-card-body" style="position:relative; height:260px;">
+                <canvas id="chartStatus"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Antragstyp ────────────────────────────────────────────────────────── -->
+    <div class="col-lg-4">
+        <div class="mc-card h-100">
+            <div class="mc-card-header">
+                <h2 class="mc-card-title"><i class="bi bi-pie-chart"></i> Anträge nach Typ (@Model.Jahr)</h2>
+            </div>
+            <div class="mc-card-body" style="position:relative; height:260px;">
+                @if (!Model.AntraegeNachTyp.Any())
+                {
+                    <div class="d-flex align-items-center justify-content-center h-100"
+                         style="color:var(--mc-text-muted); font-size:0.85rem;">
+                        Keine Daten für @Model.Jahr
+                    </div>
+                }
+                else
+                {
+                    <canvas id="chartTyp"></canvas>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Vertragsstatus ────────────────────────────────────────────────────── -->
+    <div class="col-lg-4">
+        <div class="mc-card h-100">
+            <div class="mc-card-header">
+                <h2 class="mc-card-title"><i class="bi bi-pie-chart"></i> Verträge nach Status</h2>
+            </div>
+            <div class="mc-card-body" style="position:relative; height:260px;">
+                @if (!Model.VertraegeNachStatus.Any())
+                {
+                    <div class="d-flex align-items-center justify-content-center h-100"
+                         style="color:var(--mc-text-muted); font-size:0.85rem;">
+                        Noch keine Verträge
+                    </div>
+                }
+                else
+                {
+                    <canvas id="chartVtgStatus"></canvas>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Obligo pro Leasinggesellschaft ────────────────────────────────────── -->
+    <div class="col-12">
+        <div class="mc-card">
+            <div class="mc-card-header">
+                <h2 class="mc-card-title"><i class="bi bi-bar-chart"></i> Obligo pro Leasinggesellschaft</h2>
+            </div>
+            @if (!Model.ObligoProLg.Any())
+            {
+                <div class="mc-card-body text-center" style="color:var(--mc-text-muted); font-size:0.85rem;">
+                    Keine Daten vorhanden.
+                </div>
+            }
+            else
+            {
+                <div class="mc-card-body" style="position:relative; height:240px;">
+                    <canvas id="chartObligo"></canvas>
+                </div>
+                <div style="padding:0;">
+                    <table class="mc-table">
+                        <thead>
+                            <tr>
+                                <th>Leasinggesellschaft</th>
+                                <th>Obligo</th>
+                                <th>Limit</th>
+                                <th>Auslastung</th>
+                                <th>Anträge</th>
+                                <th>Akt. Verträge</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var lg in Model.ObligoProLg)
+                            {
+                                var auslastung = lg.ObligoLimit > 0
+                                    ? (int)(lg.ObligoSumme * 100 / lg.ObligoLimit)
+                                    : 0;
+                                var farbe = auslastung >= 90 ? "#b05050" : auslastung >= 70 ? "#d4a01a" : "var(--mc-success, #28a745)";
+                                <tr>
+                                    <td class="fw-semibold">@lg.Name</td>
+                                    <td>@lg.ObligoSumme.ToString("N0") €</td>
+                                    <td style="color:var(--mc-text-muted);">
+                                        @(lg.ObligoLimit > 0 ? $"{lg.ObligoLimit:N0} €" : "–")
+                                    </td>
+                                    <td>
+                                        @if (lg.ObligoLimit > 0)
+                                        {
+                                            <div style="display:flex; align-items:center; gap:0.5rem;">
+                                                <div style="flex:1; background:var(--mc-border); border-radius:4px; height:6px; overflow:hidden; min-width:60px;">
+                                                    <div style="width:@(Math.Min(auslastung, 100))%; background:@farbe; height:100%;"></div>
+                                                </div>
+                                                <span style="font-size:0.8rem; color:@farbe; font-weight:600; white-space:nowrap;">@auslastung %</span>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span style="color:var(--mc-text-muted);">–</span>
+                                        }
+                                    </td>
+                                    <td>@lg.AnzahlAntraege</td>
+                                    <td>@lg.AnzahlAktiveVertraege</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- ── Benutzeraktivität ─────────────────────────────────────────────────── -->
+    <div class="col-12">
+        <div class="mc-card">
+            <div class="mc-card-header">
+                <h2 class="mc-card-title"><i class="bi bi-people"></i> Benutzeraktivität</h2>
+            </div>
+            <div style="padding:0;">
+                @if (!Model.BenutzerAktivitaet.Any())
+                {
+                    <div class="mc-card-body text-center" style="color:var(--mc-text-muted); font-size:0.85rem;">
+                        Keine Aktivitätsdaten vorhanden.
+                    </div>
+                }
+                else
+                {
+                    <table class="mc-table">
+                        <thead>
+                            <tr>
+                                <th>Benutzer</th>
+                                <th>Rolle</th>
+                                <th>Eingereichte Anträge</th>
+                                <th>Bearbeitete Anträge</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var b in Model.BenutzerAktivitaet)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">@b.Anzeigename</td>
+                                    <td style="color:var(--mc-text-muted); font-size:0.82rem;">@b.Rolle</td>
+                                    <td>@b.EingereichtAntraege</td>
+                                    <td>@b.BearbeiteteAntraege</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@functions {
+    private static string StatusLabel(VertragStatus s) => s switch {
+        VertragStatus.InVorbereitung => "In Vorbereitung",
+        VertragStatus.Aktiv         => "Aktiv",
+        VertragStatus.Beendet       => "Beendet",
+        VertragStatus.Gekuendigt    => "Gekündigt",
+        VertragStatus.Archiviert    => "Archiviert",
+        _                           => s.ToString()
+    };
+}
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+// ── Theme-aware colour helpers ─────────────────────────────────────────────
+const isDark = () => document.documentElement.getAttribute('data-theme') === 'dark';
+const textColor  = () => isDark() ? '#c9c9c9' : '#555';
+const gridColor  = () => isDark() ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
+const primary    = '#6b6b6b';
+const palette    = ['#6b6b6b','#a0a0a0','#c8c8c8','#4a4a4a','#2e2e2e','#8e8e8e','#b5b5b5'];
+const greenBlue  = ['#28a745','#17a2b8','#ffc107','#dc3545','#6c757d','#6b6b6b','#343a40'];
+
+Chart.defaults.font.family = "system-ui, 'Segoe UI', sans-serif";
+Chart.defaults.font.size   = 12;
+
+function baseOptions(title) {
+    return {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+            legend: { labels: { color: textColor(), boxWidth: 14 } },
+            title: { display: false }
+        }
+    };
+}
+
+// ── Monatliche Entwicklung (bar + line) ────────────────────────────────────
+const ctxMonat = document.getElementById('chartMonatlich');
+if (ctxMonat) {
+    new Chart(ctxMonat, {
+        type: 'bar',
+        data: {
+            labels: @Html.Raw(monatLabels),
+            datasets: [
+                {
+                    label: 'Anträge',
+                    data: @Html.Raw(monatAnzahl),
+                    backgroundColor: primary + 'cc',
+                    borderColor: primary,
+                    borderWidth: 1,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Obligo (€)',
+                    data: @Html.Raw(monatObligo),
+                    type: 'line',
+                    borderColor: '#17a2b8',
+                    backgroundColor: 'transparent',
+                    pointRadius: 4,
+                    tension: 0.3,
+                    yAxisID: 'y2'
+                }
+            ]
+        },
+        options: {
+            ...baseOptions(),
+            scales: {
+                y: {
+                    type: 'linear', position: 'left',
+                    ticks: { color: textColor(), stepSize: 1 },
+                    grid: { color: gridColor() },
+                    title: { display: true, text: 'Anträge', color: textColor() }
+                },
+                y2: {
+                    type: 'linear', position: 'right',
+                    ticks: { color: '#17a2b8', callback: v => v.toLocaleString('de-DE') + ' €' },
+                    grid: { drawOnChartArea: false },
+                    title: { display: true, text: 'Obligo', color: '#17a2b8' }
+                },
+                x: { ticks: { color: textColor() }, grid: { color: gridColor() } }
+            }
+        }
+    });
+}
+
+// ── Antragsstatus Donut ────────────────────────────────────────────────────
+const ctxStatus = document.getElementById('chartStatus');
+if (ctxStatus) {
+    new Chart(ctxStatus, {
+        type: 'doughnut',
+        data: {
+            labels: @Html.Raw(statusLabels),
+            datasets: [{ data: @Html.Raw(statusWerte), backgroundColor: palette }]
+        },
+        options: { ...baseOptions(), cutout: '60%' }
+    });
+}
+
+// ── Antragstyp Donut ──────────────────────────────────────────────────────
+const ctxTyp = document.getElementById('chartTyp');
+if (ctxTyp) {
+    new Chart(ctxTyp, {
+        type: 'doughnut',
+        data: {
+            labels: @Html.Raw(typLabels),
+            datasets: [{ data: @Html.Raw(typWerte), backgroundColor: greenBlue }]
+        },
+        options: { ...baseOptions(), cutout: '60%' }
+    });
+}
+
+// ── Vertragsstatus Donut ──────────────────────────────────────────────────
+const ctxVtg = document.getElementById('chartVtgStatus');
+if (ctxVtg) {
+    new Chart(ctxVtg, {
+        type: 'doughnut',
+        data: {
+            labels: @Html.Raw(vtgLabels),
+            datasets: [{ data: @Html.Raw(vtgWerte), backgroundColor: greenBlue }]
+        },
+        options: { ...baseOptions(), cutout: '60%' }
+    });
+}
+
+// ── Obligo pro LG Bar ─────────────────────────────────────────────────────
+const ctxObligo = document.getElementById('chartObligo');
+if (ctxObligo) {
+    new Chart(ctxObligo, {
+        type: 'bar',
+        data: {
+            labels: @Html.Raw(lgLabels),
+            datasets: [
+                {
+                    label: 'Obligo',
+                    data: @Html.Raw(lgObligo),
+                    backgroundColor: primary + 'cc',
+                    borderColor: primary, borderWidth: 1
+                },
+                {
+                    label: 'Limit',
+                    data: @Html.Raw(lgLimit),
+                    type: 'line',
+                    borderColor: '#dc3545',
+                    backgroundColor: 'transparent',
+                    borderDash: [6, 3],
+                    pointStyle: false,
+                    tension: 0
+                }
+            ]
+        },
+        options: {
+            ...baseOptions(),
+            scales: {
+                x: { ticks: { color: textColor() }, grid: { color: gridColor() } },
+                y: {
+                    ticks: { color: textColor(), callback: v => v.toLocaleString('de-DE') + ' €' },
+                    grid: { color: gridColor() }
+                }
+            }
+        }
+    });
+}
+
+// Re-render charts on theme toggle so colours update
+document.getElementById('themeToggle')?.addEventListener('click', () => {
+    setTimeout(() => Chart.instances && Object.values(Chart.instances)
+        .forEach(c => { c.options.plugins.legend.labels.color = textColor(); c.update(); }), 50);
+});
+</script>
+}

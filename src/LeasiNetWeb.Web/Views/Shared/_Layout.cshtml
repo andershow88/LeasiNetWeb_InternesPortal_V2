@@ -103,6 +103,12 @@
                 </a>
             </li>
             <li class="mc-nav-item">
+                <a asp-controller="Auswertung" asp-action="Index"
+                   class="mc-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Auswertung" ? "active" : "")">
+                    <i class="bi bi-bar-chart-line"></i> Auswertung
+                </a>
+            </li>
+            <li class="mc-nav-item">
                 <a asp-controller="Hilfe" asp-action="Index"
                    class="mc-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Hilfe" ? "active" : "")">
                     <i class="bi bi-question-circle"></i> Hilfe

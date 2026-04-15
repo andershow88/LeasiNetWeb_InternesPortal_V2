@@ -84,6 +84,7 @@ builder.Services.AddScoped<ILeasingantragService, LeasingantragService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<IInternePruefungService, InternePruefungService>();
 builder.Services.AddScoped<IVertragService, VertragService>();
+builder.Services.AddScoped<IAuswertungService, AuswertungService>();
 builder.Services.AddScoped<BereinigungsJob>();
 Checkpoint("5 – application services registered");
 
@@ -111,6 +112,7 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("Genehmiger", p => p.RequireClaim("Rolle", "Genehmiger", "Administrator"));
     options.AddPolicy("Administrator", p => p.RequireClaim("Rolle", "Administrator"));
     options.AddPolicy("InternerPruefer", p => p.RequireClaim("Rolle", "InternerPruefer", "Administrator"));
+    options.AddPolicy("Auswerter", p => p.RequireClaim("Rolle", "Auswerter", "Administrator"));
 });
 
 builder.Services.AddHttpContextAccessor();
