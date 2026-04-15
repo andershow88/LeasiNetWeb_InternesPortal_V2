@@ -9,6 +9,8 @@ public static class DataSeeder
 {
     public static async Task SeedAsync(ApplicationDbContext db)
     {
+        // EnsureCreated works for SQLite; for PostgreSQL on Railway we also run it
+        // (no migrations needed for MVP — schema is created fresh on first deploy)
         await db.Database.EnsureCreatedAsync();
 
         if (db.Benutzer.Any()) return;

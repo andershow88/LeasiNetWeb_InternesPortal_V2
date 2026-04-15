@@ -1,0 +1,12 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "NIXPACKS",
+    "buildCommand": "dotnet publish src/LeasiNetWeb.Web/LeasiNetWeb.Web.csproj -c Release -o out"
+  },
+  "deploy": {
+    "startCommand": "dotnet out/LeasiNetWeb.Web.dll",
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 3
+  }
+}
