@@ -96,12 +96,16 @@ using (var scope = app.Services.CreateScope())
 }
 
 // ── Hangfire recurring jobs ───────────────────────────────────────────────────
-RecurringJob.AddOrUpdate<BereinigungsJob>(
+// Use the DI-based IRecurringJobManager instead of the static RecurringJob API.
+// The static API requires JobStorage.Current which is only set after the host
+// starts; the DI-based API uses the injected JobStorage directly.
+var jobManager = app.Services.GetRequiredService<IRecurringJobManager>();
+jobManager.AddOrUpdate<BereinigungsJob>(
     "antraege-archivieren",
     job => job.AntraegeArchivieren(24),
     Cron.Monthly());
 
-RecurringJob.AddOrUpdate<BereinigungsJob>(
+jobManager.AddOrUpdate<BereinigungsJob>(
     "sync-anfragen-bereinigen",
     job => job.SynchronisierungsAnfragenBereinigen(),
     Cron.Daily(3, 0));
