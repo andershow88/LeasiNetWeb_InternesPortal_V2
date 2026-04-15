@@ -142,6 +142,28 @@ try
         );
         """);
 
+    // PruefungNummer column (nachträgliche Schema-Erweiterung)
+    try { await db.Database.ExecuteSqlRawAsync("ALTER TABLE \"InternePruefungen\" ADD COLUMN \"PruefungNummer\" TEXT NULL"); }
+    catch { /* Spalte bereits vorhanden */ }
+
+    // PruefungsSchritte-Tabelle (neu in dieser Version)
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE TABLE IF NOT EXISTS "PruefungsSchritte" (
+            "Id"                INTEGER      PRIMARY KEY AUTOINCREMENT,
+            "InternePruefungId" INTEGER      NOT NULL REFERENCES "InternePruefungen"("Id") ON DELETE CASCADE,
+            "Sortierung"        INTEGER      NOT NULL DEFAULT 1,
+            "Bezeichnung"       TEXT         NOT NULL DEFAULT '',
+            "PrueferMBId"       INTEGER      NOT NULL REFERENCES "Benutzer"("Id"),
+            "Abgeschlossen"     INTEGER      NOT NULL DEFAULT 0,
+            "AbgeschlossenAm"   TEXT         NULL,
+            "Ergebnis"          TEXT         NULL,
+            "ErstelltAm"        TEXT         NOT NULL DEFAULT (datetime('now')),
+            "GeaendertAm"       TEXT         NOT NULL DEFAULT (datetime('now')),
+            "ErstelltVonId"     INTEGER      NULL,
+            "GeaendertVonId"    INTEGER      NULL
+        );
+        """);
+
     await DataSeeder.SeedAsync(db);
     Checkpoint("10 – seed complete");
 }

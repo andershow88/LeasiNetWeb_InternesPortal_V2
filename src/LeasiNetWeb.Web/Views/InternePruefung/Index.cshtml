@@ -24,9 +24,11 @@
             <table class="mc-table">
                 <thead>
                     <tr>
+                        <th>Prüfung-Nr.</th>
                         <th>Antrag-Nr.</th>
-                        <th>Prüfer</th>
-                        <th>Fortschritt</th>
+                        <th>Hauptprüfer</th>
+                        <th>Workflow</th>
+                        <th>Checkliste</th>
                         <th>Status</th>
                         <th>Abgeschlossen</th>
                         <th></th>
@@ -35,16 +37,39 @@
                 <tbody>
                     @foreach (var p in Model)
                     {
-                        var pct = p.AnzahlPflichten > 0 ? (p.AnzahlErfuellt * 100 / p.AnzahlPflichten) : 0;
+                        var pctPflichten = p.AnzahlPflichten > 0 ? (p.AnzahlErfuellt * 100 / p.AnzahlPflichten) : 0;
+                        var pctSchritte  = p.AnzahlSchritte > 0  ? (p.AnzahlSchritteAbgeschlossen * 100 / p.AnzahlSchritte) : 100;
+                        var bereit = pctPflichten == 100 && pctSchritte == 100;
                         <tr>
-                            <td><code>@p.AntragNummer</code></td>
-                            <td>@p.PrueferMB</td>
-                            <td style="min-width:140px;">
-                                <div style="display:flex; align-items:center; gap:0.5rem;">
-                                    <div style="flex:1; background:var(--mc-border); border-radius:4px; height:6px; overflow:hidden;">
-                                        <div style="width:@pct%; background:var(--mc-primary); height:100%; transition:width .3s;"></div>
+                            <td style="font-size:0.82rem;">
+                                @if (!string.IsNullOrEmpty(p.PruefungNummer))
+                                { <code style="font-size:.8rem;">@p.PruefungNummer</code> }
+                                else
+                                { <span style="color:var(--mc-text-muted);">–</span> }
+                            </td>
+                            <td><code style="font-size:.8rem;">@p.AntragNummer</code></td>
+                            <td style="font-size:0.85rem;">@p.PrueferMB</td>
+                            <td style="min-width:120px;">
+                                @if (p.AnzahlSchritte > 0)
+                                {
+                                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                                        <div style="flex:1; background:var(--mc-border); border-radius:4px; height:5px; overflow:hidden;">
+                                            <div style="width:@pctSchritte%; background:var(--mc-navy); height:100%; transition:width .3s;"></div>
+                                        </div>
+                                        <span style="font-size:0.75rem; color:var(--mc-text-muted); white-space:nowrap;">@p.AnzahlSchritteAbgeschlossen/@p.AnzahlSchritte</span>
                                     </div>
-                                    <span style="font-size:0.78rem; color:var(--mc-text-muted); white-space:nowrap;">@p.AnzahlErfuellt / @p.AnzahlPflichten</span>
+                                }
+                                else
+                                {
+                                    <span style="color:var(--mc-text-muted); font-size:0.78rem;">–</span>
+                                }
+                            </td>
+                            <td style="min-width:120px;">
+                                <div style="display:flex; align-items:center; gap:0.5rem;">
+                                    <div style="flex:1; background:var(--mc-border); border-radius:4px; height:5px; overflow:hidden;">
+                                        <div style="width:@pctPflichten%; background:var(--mc-primary); height:100%; transition:width .3s;"></div>
+                                    </div>
+                                    <span style="font-size:0.75rem; color:var(--mc-text-muted); white-space:nowrap;">@p.AnzahlErfuellt/@p.AnzahlPflichten</span>
                                 </div>
                             </td>
                             <td>
@@ -52,7 +77,7 @@
                                 {
                                     <span class="mc-badge badge-success">Abgeschlossen</span>
                                 }
-                                else if (pct == 100)
+                                else if (bereit)
                                 {
                                     <span class="mc-badge badge-warning">Bereit zum Abschluss</span>
                                 }

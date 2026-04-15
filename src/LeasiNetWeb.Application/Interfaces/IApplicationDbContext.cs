@@ -11,6 +11,7 @@ public interface IApplicationDbContext
     DbSet<Leasingobjekt> Leasingobjekte { get; }
     DbSet<InternePruefung> InternePruefungen { get; }
     DbSet<PruefungsPflicht> PruefungsPflichten { get; }
+    DbSet<PruefungsSchritt> PruefungsSchritte { get; }
     DbSet<Vertrag> Vertraege { get; }
     DbSet<Kommentar> Kommentare { get; }
     DbSet<Anhang> Anhaenge { get; }

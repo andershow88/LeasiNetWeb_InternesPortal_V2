@@ -9,6 +9,10 @@ public class InternePruefung : BaseEntity
     public int LeasingantragId { get; set; }
     public Leasingantrag Leasingantrag { get; set; } = null!;
 
+    /// <summary>Auto-generierte Prüfnummer: {LG-Kürzel}/{Jahr}/{Seq:000}, z.B. "MB-AG/2026/001"</summary>
+    public string? PruefungNummer { get; set; }
+
+    /// <summary>Hauptverantwortlicher Prüfer (erster Schritt oder Fallback).</summary>
     public int PrueferMBId { get; set; }
     public Benutzer PrueferMB { get; set; } = null!;
 
@@ -17,5 +21,6 @@ public class InternePruefung : BaseEntity
     public string? Ergebnis { get; set; }
 
     public ICollection<PruefungsPflicht> Pflichten { get; set; } = new List<PruefungsPflicht>();
+    public ICollection<PruefungsSchritt> Schritte { get; set; } = new List<PruefungsSchritt>();
     public ICollection<Anhang> Anhaenge { get; set; } = new List<Anhang>();
 }

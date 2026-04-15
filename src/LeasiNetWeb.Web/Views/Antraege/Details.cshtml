@@ -65,14 +65,10 @@
         }
         @if (kannPruefen && Model.Status == AntragStatus.BeiMitarbeiter)
         {
-            <form asp-controller="InternePruefung" asp-action="Starten" method="post">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="antragId" value="@Model.Id" />
-                <button type="submit" class="btn btn-outline-info"
-                        onclick="return confirm('Interne Kontrolle für diesen Antrag starten?')">
-                    <i class="bi bi-shield-check me-1"></i>Int. Kontrolle starten
-                </button>
-            </form>
+            <button class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#pruefungWizardModal"
+                    onclick="ladeWizardDaten(@Model.Id)">
+                <i class="bi bi-shield-check me-1"></i>Int. Kontrolle starten
+            </button>
         }
         @if (kannPruefen && Model.Status == AntragStatus.InterneKontrolleErforderlich)
         {
@@ -298,6 +294,273 @@
         </div>
     </div>
 </div>
+
+@if (kannPruefen && Model.Status == AntragStatus.BeiMitarbeiter)
+{
+<!-- ═══════════════════════════════════════════════════════════════════
+     WIZARD: Interne Prüfung starten
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="pruefungWizardModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="wizardModalLabel">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content" style="border-radius:16px; overflow:hidden;">
+
+            <!-- Wizard-Header mit Schrittanzeige -->
+            <div style="background:linear-gradient(135deg,#1a1a2e 0%,#2d2d44 100%); padding:1.5rem 2rem 0;">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <div style="font-size:0.75rem; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:.1em;">Interne Kontrolle</div>
+                        <h5 id="wizardModalLabel" style="color:#fff; margin:0; font-size:1.1rem;">
+                            <i class="bi bi-shield-check me-2"></i>Prüfung starten
+                        </h5>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+
+                <!-- Schrittleiste -->
+                <div class="d-flex" style="gap:0;">
+                    <div class="wizard-tab active" id="tab1" onclick="wizardGoto(1)" style="flex:1; text-align:center; padding:.6rem .5rem; cursor:pointer; font-size:.78rem; font-weight:600; color:#fff; border-bottom:3px solid #c8a96e; opacity:1;">
+                        <i class="bi bi-info-circle me-1"></i>1. Überblick
+                    </div>
+                    <div class="wizard-tab" id="tab2" onclick="wizardGoto(2)" style="flex:1; text-align:center; padding:.6rem .5rem; cursor:pointer; font-size:.78rem; font-weight:600; color:rgba(255,255,255,0.45); border-bottom:3px solid transparent;">
+                        <i class="bi bi-people me-1"></i>2. Prüfer
+                    </div>
+                    <div class="wizard-tab" id="tab3" onclick="wizardGoto(3)" style="flex:1; text-align:center; padding:.6rem .5rem; cursor:pointer; font-size:.78rem; font-weight:600; color:rgba(255,255,255,0.45); border-bottom:3px solid transparent;">
+                        <i class="bi bi-check2-all me-1"></i>3. Bestätigen
+                    </div>
+                </div>
+            </div>
+
+            <!-- Schritt 1: Überblick -->
+            <div id="wStep1" class="modal-body" style="padding:1.75rem 2rem;">
+                <div id="wizardLadeinfo" class="text-center py-4" style="color:var(--mc-text-muted);">
+                    <div class="spinner-border spinner-border-sm me-2"></div> Lade Daten…
+                </div>
+                <div id="wizardOverview" class="d-none">
+                    <p style="font-size:.85rem; color:var(--mc-text-muted); margin-bottom:1.25rem;">
+                        Überprüfen Sie die Antragsdaten bevor Sie die interne Kontrolle starten.
+                    </p>
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <div style="background:var(--mc-bg); border-radius:10px; padding:1rem 1.25rem;">
+                                <div style="font-size:.72rem; text-transform:uppercase; letter-spacing:.08em; color:var(--mc-text-muted); margin-bottom:.35rem;">Antragsnummer</div>
+                                <div style="font-size:1rem; font-weight:700;" id="wAntragNummer">–</div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div style="background:var(--mc-bg); border-radius:10px; padding:1rem 1.25rem;">
+                                <div style="font-size:.72rem; text-transform:uppercase; letter-spacing:.08em; color:var(--mc-text-muted); margin-bottom:.35rem;">Leasinggesellschaft</div>
+                                <div style="font-size:1rem; font-weight:700;" id="wLeasinggesellschaft">–</div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div style="background:var(--mc-bg); border-radius:10px; padding:1rem 1.25rem;">
+                                <div style="font-size:.72rem; text-transform:uppercase; letter-spacing:.08em; color:var(--mc-text-muted); margin-bottom:.35rem;">Obligo</div>
+                                <div style="font-size:1rem; font-weight:700; color:var(--mc-gold);" id="wObligo">–</div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div style="background:var(--mc-bg); border-radius:10px; padding:1rem 1.25rem;">
+                                <div style="font-size:.72rem; text-transform:uppercase; letter-spacing:.08em; color:var(--mc-text-muted); margin-bottom:.35rem;">Prüfschritte</div>
+                                <div style="font-size:1rem; font-weight:700;" id="wSchrittAnzahl">1 Prüfer</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3 p-3 rounded" style="background:rgba(200,169,110,.1); border:1px solid rgba(200,169,110,.3); font-size:.82rem;">
+                        <i class="bi bi-info-circle me-2" style="color:var(--mc-gold);"></i>
+                        Es wird automatisch eine Prüfnummer generiert und 6 Standard-Prüfpflichten angelegt.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Schritt 2: Prüfer -->
+            <div id="wStep2" class="modal-body d-none" style="padding:1.75rem 2rem;">
+                <p style="font-size:.85rem; color:var(--mc-text-muted); margin-bottom:1.25rem;">
+                    Legen Sie die Prüfer und ihre Reihenfolge fest. Mindestens ein Prüfer ist erforderlich.
+                </p>
+                <div id="schrittListe" style="display:flex; flex-direction:column; gap:.75rem;"></div>
+                <button type="button" class="btn-mc-ghost mt-3" onclick="schrittHinzufuegen()" style="font-size:.82rem;">
+                    <i class="bi bi-plus-lg me-1"></i>Weiteren Prüfer hinzufügen
+                </button>
+            </div>
+
+            <!-- Schritt 3: Bestätigen -->
+            <div id="wStep3" class="modal-body d-none" style="padding:1.75rem 2rem;">
+                <p style="font-size:.85rem; color:var(--mc-text-muted); margin-bottom:1.25rem;">
+                    Bitte überprüfen Sie Ihre Auswahl und starten Sie die Prüfung.
+                </p>
+                <div id="wZusammenfassung"></div>
+                <div class="mt-3 p-3 rounded" style="background:rgba(220,53,69,.08); border:1px solid rgba(220,53,69,.2); font-size:.82rem;">
+                    <i class="bi bi-exclamation-triangle me-2" style="color:#dc3545;"></i>
+                    Nach dem Starten wird der Antragsstatus auf <strong>Interne Kontrolle erforderlich</strong> gesetzt.
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="modal-footer" style="border-top:1px solid var(--mc-border); padding:1rem 2rem; gap:.5rem;">
+                <button type="button" class="btn-mc-ghost" data-bs-dismiss="modal">Abbrechen</button>
+                <button type="button" id="wBtnBack" class="btn-mc-ghost d-none" onclick="wizardGoto(wizardSchritt-1)">
+                    <i class="bi bi-arrow-left me-1"></i>Zurück
+                </button>
+                <button type="button" id="wBtnNext" class="btn-mc-primary" onclick="wizardGoto(wizardSchritt+1)">
+                    Weiter <i class="bi bi-arrow-right ms-1"></i>
+                </button>
+                <form id="wStartForm" asp-controller="InternePruefung" asp-action="Starten" method="post" class="d-none">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="antragId" id="wAntragId" value="" />
+                    <div id="wHiddenSchritte"></div>
+                    <button type="submit" class="btn-mc-primary">
+                        <i class="bi bi-shield-check me-1"></i>Prüfung starten
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+// ── Wizard State ────────────────────────────────────────────────────────────
+var wizardSchritt = 1;
+var wizardDaten   = null;
+var wizardPruefer = [];   // [{prueferId, bezeichnung}]
+
+function ladeWizardDaten(antragId) {
+    wizardSchritt = 1;
+    wizardPruefer = [];
+    document.getElementById('wAntragId').value = antragId;
+    aktualisiereTabs();
+
+    document.getElementById('wizardLadeinfo').classList.remove('d-none');
+    document.getElementById('wizardOverview').classList.add('d-none');
+
+    fetch(`/InternePruefung/WizardDaten?antragId=${antragId}`)
+        .then(r => r.json())
+        .then(d => {
+            wizardDaten = d;
+            document.getElementById('wAntragNummer').textContent = d.antragNummer ?? '–';
+            document.getElementById('wLeasinggesellschaft').textContent = d.leasinggesellschaft ?? '–';
+            document.getElementById('wObligo').textContent = d.obligo != null
+                ? new Intl.NumberFormat('de-DE', {style:'currency', currency:'EUR'}).format(d.obligo)
+                : '–';
+            document.getElementById('wizardLadeinfo').classList.add('d-none');
+            document.getElementById('wizardOverview').classList.remove('d-none');
+
+            // Standard: aktueller Benutzer als erster Prüfer
+            if (wizardPruefer.length === 0 && d.verfuegbarePruefer?.length > 0) {
+                wizardPruefer = [{ prueferId: d.verfuegbarePruefer[0].id, bezeichnung: '1. Prüfer' }];
+                aktualisiereSchrittAnzahl();
+            }
+        })
+        .catch(() => {
+            document.getElementById('wizardLadeinfo').textContent = 'Fehler beim Laden der Daten.';
+        });
+}
+
+function wizardGoto(nr) {
+    if (nr < 1 || nr > 3) return;
+    if (nr === 2) renderSchrittListe();
+    if (nr === 3) renderZusammenfassung();
+    wizardSchritt = nr;
+    aktualisiereTabs();
+
+    ['wStep1','wStep2','wStep3'].forEach((id, i) => {
+        document.getElementById(id).classList.toggle('d-none', i + 1 !== nr);
+    });
+
+    document.getElementById('wBtnBack').classList.toggle('d-none', nr === 1);
+    document.getElementById('wBtnNext').classList.toggle('d-none', nr === 3);
+    document.getElementById('wStartForm').classList.toggle('d-none', nr !== 3);
+}
+
+function aktualisiereTabs() {
+    [1,2,3].forEach(i => {
+        var tab = document.getElementById('tab' + i);
+        var aktiv = i === wizardSchritt;
+        tab.style.color       = aktiv ? '#fff' : 'rgba(255,255,255,0.45)';
+        tab.style.borderBottom = aktiv ? '3px solid #c8a96e' : '3px solid transparent';
+    });
+}
+
+function aktualisiereSchrittAnzahl() {
+    document.getElementById('wSchrittAnzahl').textContent =
+        wizardPruefer.length + (wizardPruefer.length === 1 ? ' Prüfer' : ' Prüfer');
+}
+
+// ── Schritt-Liste (Step 2) ──────────────────────────────────────────────────
+
+function renderSchrittListe() {
+    var cont = document.getElementById('schrittListe');
+    cont.innerHTML = '';
+    wizardPruefer.forEach(function(schritt, idx) {
+        var el = document.createElement('div');
+        el.style.cssText = 'display:flex; align-items:center; gap:.75rem; background:var(--mc-bg); border-radius:10px; padding:.9rem 1rem;';
+        el.innerHTML = `
+            <div style="width:28px; height:28px; border-radius:50%; background:var(--mc-primary); color:#fff;
+                        display:flex; align-items:center; justify-content:center; font-size:.78rem; font-weight:700; flex-shrink:0;">
+                ${idx + 1}
+            </div>
+            <select onchange="wizardPruefer[${idx}].prueferId=parseInt(this.value); aktualisiereSchrittAnzahl();"
+                    style="flex:1; border:1.5px solid var(--mc-border); border-radius:6px; padding:.4rem .6rem; font-size:.85rem; background:var(--mc-bg-card); color:var(--mc-text);">
+                ${(wizardDaten?.verfuegbarePruefer ?? []).map(p =>
+                    `<option value="${p.id}" ${p.id === schritt.prueferId ? 'selected' : ''}>${p.name}</option>`
+                ).join('')}
+            </select>
+            <input type="text" value="${schritt.bezeichnung}"
+                   placeholder="z.B. 1. Prüfer, Supervisor…"
+                   oninput="wizardPruefer[${idx}].bezeichnung=this.value;"
+                   style="width:140px; border:1.5px solid var(--mc-border); border-radius:6px; padding:.4rem .6rem; font-size:.82rem; background:var(--mc-bg-card); color:var(--mc-text);" />
+            ${idx > 0 ? `<button type="button" onclick="schrittEntfernen(${idx})" style="background:none; border:none; cursor:pointer; color:var(--mc-text-muted); font-size:1rem; padding:.2rem;" title="Entfernen">
+                <i class="bi bi-x-circle"></i>
+            </button>` : '<div style="width:28px;"></div>'}
+        `;
+        cont.appendChild(el);
+    });
+    aktualisiereSchrittAnzahl();
+}
+
+function schrittHinzufuegen() {
+    var ersterPruefer = wizardDaten?.verfuegbarePruefer?.[0]?.id ?? 0;
+    wizardPruefer.push({ prueferId: ersterPruefer, bezeichnung: (wizardPruefer.length + 1) + '. Prüfer' });
+    renderSchrittListe();
+}
+
+function schrittEntfernen(idx) {
+    wizardPruefer.splice(idx, 1);
+    wizardPruefer.forEach((s, i) => { if (!s.bezeichnung || /^\d+\. Prüfer$/.test(s.bezeichnung)) s.bezeichnung = (i+1) + '. Prüfer'; });
+    renderSchrittListe();
+}
+
+// ── Zusammenfassung (Step 3) ────────────────────────────────────────────────
+
+function renderZusammenfassung() {
+    var cont = document.getElementById('wZusammenfassung');
+    var pruefer = wizardDaten?.verfuegbarePruefer ?? [];
+    var rows = wizardPruefer.map((s, i) => {
+        var p = pruefer.find(x => x.id === s.prueferId);
+        return `<div style="display:flex; align-items:center; gap:.75rem; padding:.6rem 0; border-bottom:1px solid var(--mc-border);">
+            <div style="width:24px; height:24px; border-radius:50%; background:var(--mc-primary); color:#fff;
+                        display:flex; align-items:center; justify-content:center; font-size:.72rem; font-weight:700;">${i+1}</div>
+            <div style="flex:1;"><strong>${s.bezeichnung}</strong></div>
+            <div style="color:var(--mc-text-muted); font-size:.85rem;">${p ? p.name : '–'}</div>
+        </div>`;
+    }).join('');
+
+    cont.innerHTML = `<div style="background:var(--mc-bg); border-radius:10px; padding:1rem 1.25rem; margin-bottom:1rem;">
+        <div style="font-size:.72rem; text-transform:uppercase; letter-spacing:.08em; color:var(--mc-text-muted); margin-bottom:.75rem;">Workflow-Schritte</div>
+        ${rows}
+    </div>`;
+
+    // Hidden inputs für Form-Submit
+    var hidden = document.getElementById('wHiddenSchritte');
+    hidden.innerHTML = '';
+    wizardPruefer.forEach(function(s) {
+        hidden.innerHTML += `<input type="hidden" name="prueferIds" value="${s.prueferId}" />`;
+        hidden.innerHTML += `<input type="hidden" name="prueferBezeichnungen" value="${s.bezeichnung}" />`;
+    });
+}
+</script>
+}
+}
 
 @functions {
     private static string StatusBadgeClass(AntragStatus status) => status switch

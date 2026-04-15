@@ -1,3 +1,4 @@
+using LeasiNetWeb.Application.DTOs;
 using LeasiNetWeb.Application.Interfaces;
 using LeasiNetWeb.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
@@ -27,6 +28,17 @@ public class InternePruefungController : BaseController
         return View(liste);
     }
 
+    // ── Wizard-Daten für Antrag-Details ───────────────────────────────────────
+
+    [HttpGet]
+    [AllowAnonymous]  // ViewComponent im Antraege-Context — Authz via Antraege-Controller
+    public async Task<IActionResult> WizardDaten(int antragId)
+    {
+        var daten = await _pruefung.GetWizardDatenAsync(antragId);
+        if (daten is null) return NotFound();
+        return Json(daten);
+    }
+
     // ── Detail / Checkliste ────────────────────────────────────────────────────
 
     public async Task<IActionResult> Details(int antragId)
@@ -41,15 +53,35 @@ public class InternePruefungController : BaseController
         return View(dto);
     }
 
-    // ── Starten ────────────────────────────────────────────────────────────────
+    // ── Protokoll-Druckansicht ────────────────────────────────────────────────
+
+    [HttpGet]
+    public async Task<IActionResult> Protokoll(int antragId)
+    {
+        var dto = await _pruefung.GetByAntragIdAsync(antragId);
+        if (dto is null) return NotFound();
+        return View(dto);
+    }
+
+    // ── Starten (Wizard-Ergebnis) ─────────────────────────────────────────────
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Starten(int antragId)
+    public async Task<IActionResult> Starten(
+        int antragId,
+        [FromForm] List<int> prueferIds,
+        [FromForm] List<string> prueferBezeichnungen)
     {
         try
         {
-            await _pruefung.StartenAsync(antragId, AktuellerBenutzerId);
+            var schritte = prueferIds
+                .Select((id, i) => new PruefungsSchrittInput(
+                    id,
+                    i < prueferBezeichnungen.Count ? prueferBezeichnungen[i] : $"{i + 1}. Prüfer"))
+                .ToList();
+
+            var hauptPruefer = schritte.Count > 0 ? schritte[0].PrueferMBId : AktuellerBenutzerId;
+            await _pruefung.StartenAsync(antragId, hauptPruefer, schritte);
             TempData["Erfolg"] = "Interne Prüfung gestartet.";
         }
         catch (Exception ex)
@@ -65,7 +97,7 @@ public class InternePruefungController : BaseController
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> PflichtErfuellen(int pflichtId, int antragId, string? bemerkungen)
     {
-        await _pruefung.PflichtErfuellenAsync(pflichtId, bemerkungen);
+        await _pruefung.PflichtErfuellenAsync(pflichtId, bemerkungen, AktuellerBenutzerId);
         return RedirectToAction(nameof(Details), new { antragId });
     }
 
@@ -74,6 +106,24 @@ public class InternePruefungController : BaseController
     public async Task<IActionResult> PflichtRueckgaengig(int pflichtId, int antragId)
     {
         await _pruefung.PflichtRueckgaengigAsync(pflichtId);
+        return RedirectToAction(nameof(Details), new { antragId });
+    }
+
+    // ── Schritt abschließen ────────────────────────────────────────────────────
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SchrittAbschliessen(int schrittId, int antragId, string? ergebnis)
+    {
+        try
+        {
+            await _pruefung.SchrittAbschliessenAsync(schrittId, AktuellerBenutzerId, ergebnis);
+            TempData["Erfolg"] = "Prüfschritt abgeschlossen.";
+        }
+        catch (Exception ex)
+        {
+            TempData["Fehler"] = ex.Message;
+        }
         return RedirectToAction(nameof(Details), new { antragId });
     }
 
@@ -107,19 +157,13 @@ public class InternePruefungController : BaseController
             TempData["Fehler"] = "Bitte wählen Sie eine Datei aus.";
             return RedirectToAction(nameof(Details), new { antragId });
         }
-
         try
         {
             await using var stream = datei.OpenReadStream();
             await _anhaenge.HochladenAsync(stream, datei.FileName, datei.ContentType,
-                datei.Length, AnhangTyp.Pruefungsdokument,
-                AktuellerBenutzerId, pruefungId: pruefungId);
+                datei.Length, AnhangTyp.Pruefungsdokument, AktuellerBenutzerId, pruefungId: pruefungId);
         }
-        catch (InvalidOperationException ex)
-        {
-            TempData["Fehler"] = ex.Message;
-        }
-
+        catch (InvalidOperationException ex) { TempData["Fehler"] = ex.Message; }
         return RedirectToAction(nameof(Details), new { antragId });
     }
 
@@ -131,9 +175,6 @@ public class InternePruefungController : BaseController
             var (inhalt, contentType, dateiname) = await _anhaenge.HerunterladenAsync(anhangId);
             return File(inhalt, contentType, dateiname);
         }
-        catch (KeyNotFoundException)
-        {
-            return NotFound();
-        }
+        catch (KeyNotFoundException) { return NotFound(); }
     }
 }

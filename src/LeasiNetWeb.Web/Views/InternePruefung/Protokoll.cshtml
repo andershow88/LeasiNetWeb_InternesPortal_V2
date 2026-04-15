@@ -1,0 +1,434 @@
+@using LeasiNetWeb.Application.DTOs
+@model InternePruefungDto
+@{
+    Layout = null;  // Standalone-Seite ohne Layout für sauberen Druck
+    var schritte = Model.Schritte.OrderBy(s => s.Sortierung).ToList();
+    var pflichten = Model.Pflichten.OrderBy(p => p.Sortierung).ToList();
+    string datum = DateTime.Now.ToString("dd.MM.yyyy");
+    string druckDatum = DateTime.Now.ToString("dd.MM.yyyy HH:mm");
+}
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8" />
+    <title>Prüfprotokoll @(Model.PruefungNummer ?? Model.AntragNummer)</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            font-size: 10pt;
+            color: #1a1a2e;
+            background: #fff;
+            padding: 0;
+        }
+
+        @@page {
+            size: A4;
+            margin: 18mm 15mm 18mm 15mm;
+        }
+
+        @@media print {
+            body { padding: 0; }
+            .no-print { display: none !important; }
+            .page-break { page-break-before: always; }
+            a { text-decoration: none; color: inherit; }
+        }
+
+        /* ── Header ── */
+        .proto-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 3px solid #16213e;
+            padding-bottom: 10px;
+            margin-bottom: 18px;
+        }
+        .proto-logo {
+            font-size: 18pt;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: #16213e;
+        }
+        .proto-logo span {
+            color: #c9a84c;
+        }
+        .proto-meta {
+            text-align: right;
+            font-size: 8pt;
+            color: #555;
+            line-height: 1.6;
+        }
+        .proto-title {
+            font-size: 14pt;
+            font-weight: 700;
+            color: #16213e;
+            margin-bottom: 4px;
+        }
+        .proto-subtitle {
+            font-size: 9pt;
+            color: #555;
+        }
+
+        /* ── Section headings ── */
+        .section-title {
+            font-size: 9pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: #16213e;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 3px;
+            margin: 16px 0 8px;
+        }
+
+        /* ── Info grid ── */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .info-cell {
+            background: #f8f9fc;
+            border: 1px solid #e8eaf0;
+            border-radius: 4px;
+            padding: 6px 8px;
+        }
+        .info-cell label {
+            display: block;
+            font-size: 7pt;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #888;
+            margin-bottom: 2px;
+        }
+        .info-cell .val {
+            font-weight: 600;
+            font-size: 9.5pt;
+        }
+        .val-gold { color: #a07820; }
+
+        /* ── Schritte Timeline ── */
+        .schritte-list {
+            list-style: none;
+            padding: 0;
+        }
+        .schritt-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .schritt-item:last-child { border-bottom: none; }
+        .schritt-num {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8pt;
+            font-weight: 700;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+        .schritt-num.done { background: #28a745; color: #fff; }
+        .schritt-num.open { background: #e8eaf0; color: #555; }
+        .schritt-body { flex: 1; }
+        .schritt-bezeichnung { font-weight: 600; font-size: 9.5pt; }
+        .schritt-pruefer { font-size: 8.5pt; color: #555; }
+        .schritt-ergebnis {
+            font-size: 8pt;
+            color: #333;
+            margin-top: 2px;
+            padding: 3px 6px;
+            background: #f5f5f5;
+            border-left: 2px solid #28a745;
+        }
+        .schritt-datum {
+            font-size: 8pt;
+            color: #888;
+            white-space: nowrap;
+            margin-top: 3px;
+        }
+
+        /* ── Checkliste ── */
+        .pflichten-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9pt;
+        }
+        .pflichten-table th {
+            background: #f0f2f8;
+            padding: 5px 8px;
+            text-align: left;
+            font-size: 8pt;
+            font-weight: 600;
+            border: 1px solid #dde;
+        }
+        .pflichten-table td {
+            padding: 5px 8px;
+            border: 1px solid #eee;
+            vertical-align: top;
+        }
+        .pflichten-table tr:nth-child(even) td { background: #fafafa; }
+        .check-yes { color: #28a745; font-weight: 700; }
+        .check-no  { color: #aaa; }
+
+        /* ── Ergebnis-Box ── */
+        .ergebnis-box {
+            border: 1px solid #dde;
+            border-radius: 4px;
+            padding: 10px 12px;
+            margin-top: 8px;
+            background: #f8f9fc;
+        }
+        .ergebnis-box label { font-size: 8pt; text-transform: uppercase; letter-spacing: .06em; color: #888; }
+        .ergebnis-box .text  { margin-top: 4px; font-size: 9.5pt; }
+
+        /* ── Unterschrift ── */
+        .sig-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 20px;
+        }
+        .sig-box {
+            border-top: 1px solid #555;
+            padding-top: 4px;
+            font-size: 8pt;
+            color: #555;
+        }
+
+        /* ── Footer ── */
+        .proto-footer {
+            margin-top: 20px;
+            border-top: 1px solid #ddd;
+            padding-top: 6px;
+            font-size: 7.5pt;
+            color: #aaa;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* ── Print button ── */
+        .print-bar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            background: #16213e;
+            color: #fff;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 100;
+        }
+        .print-bar button {
+            background: #c9a84c;
+            border: none;
+            color: #16213e;
+            font-weight: 700;
+            padding: 6px 18px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 10pt;
+        }
+        .print-bar button:hover { background: #e0bc5a; }
+        .proto-content { margin-top: 52px; padding: 20px 30px; max-width: 210mm; margin-left: auto; margin-right: auto; }
+        @@media print { .proto-content { margin-top: 0; padding: 0; } }
+    </style>
+</head>
+<body>
+
+<!-- Print Bar (nur am Bildschirm sichtbar) -->
+<div class="print-bar no-print">
+    <span style="font-size:10pt; font-weight:600;">Prüfprotokoll – @(Model.PruefungNummer ?? Model.AntragNummer)</span>
+    <div style="display:flex; gap:10px;">
+        <button onclick="window.print()">&#128438; Drucken / Als PDF speichern</button>
+        <button onclick="window.close()" style="background:#334;color:#fff;">Schliessen</button>
+    </div>
+</div>
+
+<div class="proto-content">
+
+    <!-- ── Kopfzeile ── -->
+    <div class="proto-header">
+        <div>
+            <div class="proto-logo">Leasi<span>Net</span></div>
+            <div class="proto-title" style="margin-top:8px;">Internes Prüfprotokoll</div>
+            @if (!string.IsNullOrEmpty(Model.PruefungNummer))
+            {
+                <div class="proto-subtitle">Prüfung-Nr.: <strong>@Model.PruefungNummer</strong></div>
+            }
+        </div>
+        <div class="proto-meta">
+            <div>Druckdatum: @druckDatum</div>
+            <div>Antrag: <strong>@Model.AntragNummer</strong></div>
+            @if (Model.Abgeschlossen && Model.AbgeschlossenAm.HasValue)
+            {
+                <div>Abgeschlossen: <strong>@Model.AbgeschlossenAm.Value.ToString("dd.MM.yyyy")</strong></div>
+            }
+            else
+            {
+                <div style="color:#c0392b; font-weight:600;">&#9888; Prüfung noch nicht abgeschlossen</div>
+            }
+        </div>
+    </div>
+
+    <!-- ── Antrag-Stammdaten ── -->
+    <div class="section-title">Antragsdaten</div>
+    <div class="info-grid">
+        <div class="info-cell">
+            <label>Antrag-Nummer</label>
+            <div class="val">@Model.AntragNummer</div>
+        </div>
+        <div class="info-cell">
+            <label>Leasinggesellschaft</label>
+            <div class="val">@(Model.Leasinggesellschaft ?? "–")</div>
+        </div>
+        <div class="info-cell">
+            <label>Obligo</label>
+            <div class="val val-gold">@Model.Obligo.ToString("N2") €</div>
+        </div>
+        <div class="info-cell">
+            <label>Hauptprüfer</label>
+            <div class="val">@Model.PrueferMB</div>
+        </div>
+    </div>
+
+    <!-- ── Workflow-Schritte ── -->
+    @if (schritte.Any())
+    {
+        <div class="section-title">Prüfschritte</div>
+        <ul class="schritte-list">
+            @foreach (var s in schritte)
+            {
+                <li class="schritt-item">
+                    <div class="schritt-num @(s.Abgeschlossen ? "done" : "open")">
+                        @if (s.Abgeschlossen)
+                        { <span>&#10003;</span> }
+                        else
+                        { <span>@s.Sortierung</span> }
+                    </div>
+                    <div class="schritt-body">
+                        <div class="schritt-bezeichnung">@s.Bezeichnung</div>
+                        <div class="schritt-pruefer">Prüfer: @s.PrueferName</div>
+                        @if (!string.IsNullOrWhiteSpace(s.Ergebnis))
+                        {
+                            <div class="schritt-ergebnis">@s.Ergebnis</div>
+                        }
+                    </div>
+                    <div class="schritt-datum">
+                        @if (s.Abgeschlossen && s.AbgeschlossenAm.HasValue)
+                        { <span>@s.AbgeschlossenAm.Value.ToString("dd.MM.yyyy")</span> }
+                        else
+                        { <span style="color:#aaa;">Offen</span> }
+                    </div>
+                </li>
+            }
+        </ul>
+    }
+
+    <!-- ── Checkliste ── -->
+    @if (pflichten.Any())
+    {
+        <div class="section-title">
+            Checkliste
+            <span style="font-size:8pt; font-weight:400; text-transform:none; color:#555;">
+                — @pflichten.Count(p => p.Erfuellt) von @pflichten.Count erfüllt
+            </span>
+        </div>
+        <table class="pflichten-table">
+            <thead>
+                <tr>
+                    <th style="width:30px;">#</th>
+                    <th>Prüfpunkt</th>
+                    <th style="width:70px;">Status</th>
+                    <th style="width:90px;">Erfüllt am</th>
+                    <th>Bemerkungen</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in pflichten)
+                {
+                    <tr>
+                        <td>@p.Sortierung</td>
+                        <td>
+                            <div style="font-weight:600;">@p.Bezeichnung</div>
+                            @if (!string.IsNullOrWhiteSpace(p.Beschreibung))
+                            {
+                                <div style="font-size:8pt; color:#666; margin-top:2px;">@p.Beschreibung</div>
+                            }
+                        </td>
+                        <td>
+                            @if (p.Erfuellt)
+                            { <span class="check-yes">&#10003; OK</span> }
+                            else
+                            { <span class="check-no">Offen</span> }
+                        </td>
+                        <td style="font-size:8pt; color:#555;">
+                            @(p.ErfuelltAm.HasValue ? p.ErfuelltAm.Value.ToString("dd.MM.yyyy") : "–")
+                        </td>
+                        <td style="font-size:8.5pt; color:#444;">@(p.Bemerkungen ?? "–")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    <!-- ── Gesamtergebnis ── -->
+    @if (!string.IsNullOrWhiteSpace(Model.Ergebnis))
+    {
+        <div class="section-title">Gesamtergebnis / Fazit</div>
+        <div class="ergebnis-box">
+            <div class="text">@Model.Ergebnis</div>
+        </div>
+    }
+
+    <!-- ── Unterschriften ── -->
+    <div class="section-title">Unterschriften</div>
+    <div class="sig-grid">
+        @foreach (var s in schritte)
+        {
+            <div class="sig-box">
+                <div>@s.PrueferName</div>
+                <div style="color:#888; font-size:7.5pt; margin-top:1px;">@s.Bezeichnung</div>
+                <div style="height:30px;"></div>
+                <div>Datum: ____________________</div>
+            </div>
+        }
+        @if (!schritte.Any())
+        {
+            <div class="sig-box">
+                <div>@Model.PrueferMB</div>
+                <div style="height:30px;"></div>
+                <div>Datum: ____________________</div>
+            </div>
+            <div class="sig-box">
+                <div>Stellvertretung / Kontrolle</div>
+                <div style="height:30px;"></div>
+                <div>Datum: ____________________</div>
+            </div>
+        }
+    </div>
+
+    <!-- ── Fusszeile ── -->
+    <div class="proto-footer">
+        <span>LeasiNet Internes Portal &mdash; Vertrauliches Dokument</span>
+        <span>Erstellt: @druckDatum</span>
+    </div>
+
+</div>
+
+<script>
+    // Automatisch Druckdialog öffnen wenn keine URL-Parameter ?nodruck
+    if (!window.location.search.includes('nodruck')) {
+        window.addEventListener('load', function () {
+            setTimeout(function () { window.print(); }, 400);
+        });
+    }
+</script>
+</body>
+</html>

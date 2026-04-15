@@ -18,6 +18,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext, IDataProte
     public DbSet<Leasingobjekt> Leasingobjekte => Set<Leasingobjekt>();
     public DbSet<InternePruefung> InternePruefungen => Set<InternePruefung>();
     public DbSet<PruefungsPflicht> PruefungsPflichten => Set<PruefungsPflicht>();
+    public DbSet<PruefungsSchritt> PruefungsSchritte => Set<PruefungsSchritt>();
     public DbSet<Vertrag> Vertraege => Set<Vertrag>();
     public DbSet<Kommentar> Kommentare => Set<Kommentar>();
     public DbSet<Anhang> Anhaenge => Set<Anhang>();
@@ -109,6 +110,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext, IDataProte
         modelBuilder.Entity<InternePruefung>(e =>
         {
             e.HasKey(p => p.Id);
+            e.Property(p => p.PruefungNummer).HasMaxLength(50);
             e.HasOne(p => p.Leasingantrag).WithMany(a => a.InternePruefungen)
                 .HasForeignKey(p => p.LeasingantragId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(p => p.PrueferMB).WithMany()
@@ -122,6 +124,17 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext, IDataProte
             e.Property(p => p.Bezeichnung).IsRequired().HasMaxLength(300);
             e.HasOne(p => p.InternePruefung).WithMany(ip => ip.Pflichten)
                 .HasForeignKey(p => p.InternePruefungId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ── PruefungsSchritt ──────────────────────────────────────────────────
+        modelBuilder.Entity<PruefungsSchritt>(e =>
+        {
+            e.HasKey(s => s.Id);
+            e.Property(s => s.Bezeichnung).IsRequired().HasMaxLength(200);
+            e.HasOne(s => s.InternePruefung).WithMany(ip => ip.Schritte)
+                .HasForeignKey(s => s.InternePruefungId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(s => s.PrueferMB).WithMany()
+                .HasForeignKey(s => s.PrueferMBId).OnDelete(DeleteBehavior.Restrict);
         });
 
         // ── Vertrag ───────────────────────────────────────────────────────────
