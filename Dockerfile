@@ -11,6 +11,7 @@ RUN dotnet publish src/LeasiNetWeb.Web/LeasiNetWeb.Web.csproj \
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 COPY --from=build /app/out .
+COPY --from=build /src/README.md /app/README.md
 
 # Disable the .NET diagnostics server.
 # Railway's seccomp profile prevents the DependencyInjectionEventSource static

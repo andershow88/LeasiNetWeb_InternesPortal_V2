@@ -78,8 +78,18 @@ public class AccountController : Controller
     [AllowAnonymous]
     public IActionResult Dokumentation()
     {
-        var readmePath = Path.Combine(Directory.GetCurrentDirectory(), "README.md");
-        if (!System.IO.File.Exists(readmePath))
+        // README.md liegt im Repo-Root; Suche im aktuellen Verzeichnis und bis zu 3 Ebenen nach oben
+        var searchDir = Directory.GetCurrentDirectory();
+        string? readmePath = null;
+        for (int i = 0; i < 4; i++)
+        {
+            var candidate = Path.Combine(searchDir, "README.md");
+            if (System.IO.File.Exists(candidate)) { readmePath = candidate; break; }
+            var parent = Directory.GetParent(searchDir)?.FullName;
+            if (parent == null) break;
+            searchDir = parent;
+        }
+        if (readmePath == null)
             return NotFound("README.md nicht gefunden.");
 
         var markdownText = System.IO.File.ReadAllText(readmePath);
