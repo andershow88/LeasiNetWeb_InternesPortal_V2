@@ -6,5 +6,5 @@ public class Ablehnungsgrund : BaseEntity
     public string Bezeichnung { get; set; } = string.Empty;
     public bool IstAktiv { get; set; } = true;
 
-    public ICollection<Leasingantrag> Leasingantraege { get; set; } = [];
+    public ICollection<Leasingantrag> Leasingantraege { get; set; } = new List<Leasingantrag>();
 }

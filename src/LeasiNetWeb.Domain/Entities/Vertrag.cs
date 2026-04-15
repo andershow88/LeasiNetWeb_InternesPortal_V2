@@ -25,6 +25,6 @@ public class Vertrag : BaseEntity
     public decimal? MonatlicheRate { get; set; }
     public decimal? Zinssatz { get; set; }
 
-    public ICollection<Anhang> Anhaenge { get; set; } = [];
-    public ICollection<DokumentAustausch> DokumentAustausche { get; set; } = [];
+    public ICollection<Anhang> Anhaenge { get; set; } = new List<Anhang>();
+    public ICollection<DokumentAustausch> DokumentAustausche { get; set; } = new List<DokumentAustausch>();
 }

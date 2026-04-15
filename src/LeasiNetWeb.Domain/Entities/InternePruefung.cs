@@ -16,6 +16,6 @@ public class InternePruefung : BaseEntity
     public DateTime? AbgeschlossenAm { get; set; }
     public string? Ergebnis { get; set; }
 
-    public ICollection<PruefungsPflicht> Pflichten { get; set; } = [];
-    public ICollection<Anhang> Anhaenge { get; set; } = [];
+    public ICollection<PruefungsPflicht> Pflichten { get; set; } = new List<PruefungsPflicht>();
+    public ICollection<Anhang> Anhaenge { get; set; } = new List<Anhang>();
 }

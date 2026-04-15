@@ -46,11 +46,11 @@ public class Leasingantrag : BaseEntity
     public DateTime? ArchiviertAm { get; set; }
 
     // Navigation
-    public ICollection<Leasingobjekt> Objekte { get; set; } = [];
-    public ICollection<InternePruefung> InternePruefungen { get; set; } = [];
-    public ICollection<Kommentar> Kommentare { get; set; } = [];
-    public ICollection<Anhang> Anhaenge { get; set; } = [];
-    public ICollection<Ereignis> Ereignisse { get; set; } = [];
-    public ICollection<Obligo> ObligoEintraege { get; set; } = [];
+    public ICollection<Leasingobjekt> Objekte { get; set; } = new List<Leasingobjekt>();
+    public ICollection<InternePruefung> InternePruefungen { get; set; } = new List<InternePruefung>();
+    public ICollection<Kommentar> Kommentare { get; set; } = new List<Kommentar>();
+    public ICollection<Anhang> Anhaenge { get; set; } = new List<Anhang>();
+    public ICollection<Ereignis> Ereignisse { get; set; } = new List<Ereignis>();
+    public ICollection<Obligo> ObligoEintraege { get; set; } = new List<Obligo>();
     public Vertrag? Vertrag { get; set; }
 }

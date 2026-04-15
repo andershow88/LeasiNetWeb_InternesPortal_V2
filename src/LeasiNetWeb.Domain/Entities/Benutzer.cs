@@ -17,11 +17,11 @@ public class Benutzer : BaseEntity
     public Leasinggesellschaft? Leasinggesellschaft { get; set; }
 
     // Navigation
-    public ICollection<Leasingantrag> EingereichteLeasingantraege { get; set; } = [];
-    public ICollection<Leasingantrag> ZugewieseneAntraegeMB { get; set; } = [];
-    public ICollection<Leasingantrag> ZugewieseneAntraegeLG { get; set; } = [];
-    public ICollection<Kommentar> Kommentare { get; set; } = [];
-    public ICollection<Nachricht> GesendeteNachrichten { get; set; } = [];
+    public ICollection<Leasingantrag> EingereichteLeasingantraege { get; set; } = new List<Leasingantrag>();
+    public ICollection<Leasingantrag> ZugewieseneAntraegeMB { get; set; } = new List<Leasingantrag>();
+    public ICollection<Leasingantrag> ZugewieseneAntraegeLG { get; set; } = new List<Leasingantrag>();
+    public ICollection<Kommentar> Kommentare { get; set; } = new List<Kommentar>();
+    public ICollection<Nachricht> GesendeteNachrichten { get; set; } = new List<Nachricht>();
 
     public string Anzeigename => $"{Vorname} {Nachname}".Trim();
 }

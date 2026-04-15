@@ -13,7 +13,7 @@ public class Geraetetyp : BaseEntity
     // Parent category (top-level types have null)
     public int? ElterntypId { get; set; }
     public Geraetetyp? Elterntyp { get; set; }
-    public ICollection<Geraetetyp> Untertypen { get; set; } = [];
+    public ICollection<Geraetetyp> Untertypen { get; set; } = new List<Geraetetyp>();
 
-    public ICollection<Leasingobjekt> Objekte { get; set; } = [];
+    public ICollection<Leasingobjekt> Objekte { get; set; } = new List<Leasingobjekt>();
 }

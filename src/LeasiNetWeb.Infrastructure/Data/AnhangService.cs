@@ -12,15 +12,15 @@ public class AnhangService : IAnhangService
     private readonly IApplicationDbContext _db;
     private readonly string _uploadPfad;
 
-    private static readonly HashSet<string> ErlaubteContentTypes =
-    [
+    private static readonly HashSet<string> ErlaubteContentTypes = new HashSet<string>
+    {
         "application/pdf",
         "image/jpeg", "image/png",
         "application/msword",
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         "application/vnd.ms-excel",
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    ];
+    };
 
     private const long MaxDateigroesse = 20 * 1024 * 1024; // 20 MB
 

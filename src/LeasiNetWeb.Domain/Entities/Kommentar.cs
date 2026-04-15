@@ -15,5 +15,5 @@ public class Kommentar : BaseEntity
     public string Text { get; set; } = string.Empty;
     public bool IstIntern { get; set; }           // Internal-only comments not visible to LG users
 
-    public ICollection<Anhang> Anhaenge { get; set; } = [];
+    public ICollection<Anhang> Anhaenge { get; set; } = new List<Anhang>();
 }

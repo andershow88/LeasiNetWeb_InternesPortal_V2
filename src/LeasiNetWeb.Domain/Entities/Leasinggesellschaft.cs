@@ -15,7 +15,7 @@ public class Leasinggesellschaft : BaseEntity
     public decimal ObligoLimit { get; set; }
 
     // Navigation
-    public ICollection<Benutzer> Benutzer { get; set; } = [];
-    public ICollection<Leasingantrag> Leasingantraege { get; set; } = [];
-    public ICollection<LgRegistrierung> Registrierungen { get; set; } = [];
+    public ICollection<Benutzer> Benutzer { get; set; } = new List<Benutzer>();
+    public ICollection<Leasingantrag> Leasingantraege { get; set; } = new List<Leasingantrag>();
+    public ICollection<LgRegistrierung> Registrierungen { get; set; } = new List<LgRegistrierung>();
 }

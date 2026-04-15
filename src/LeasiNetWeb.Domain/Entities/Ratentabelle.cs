@@ -11,5 +11,5 @@ public class Ratentabelle : BaseEntity
     public DateTime GueltigAb { get; set; }
     public DateTime? GueltigBis { get; set; }
 
-    public ICollection<Rate> Raten { get; set; } = [];
+    public ICollection<Rate> Raten { get; set; } = new List<Rate>();
 }

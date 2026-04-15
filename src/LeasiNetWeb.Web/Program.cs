@@ -126,7 +126,7 @@ app.UseAuthorization();
 
 app.UseHangfireDashboard("/hangfire", new DashboardOptions
 {
-    Authorization = [new HangfireAdminAuthorization()]
+    Authorization = new[] { new HangfireAdminAuthorization() }
 });
 
 app.MapControllerRoute(

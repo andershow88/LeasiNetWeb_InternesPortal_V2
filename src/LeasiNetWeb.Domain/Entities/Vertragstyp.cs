@@ -6,5 +6,5 @@ public class Vertragstyp : BaseEntity
     public string Bezeichnung { get; set; } = string.Empty;
     public bool IstAktiv { get; set; } = true;
 
-    public ICollection<Vertrag> Vertraege { get; set; } = [];
+    public ICollection<Vertrag> Vertraege { get; set; } = new List<Vertrag>();
 }
