@@ -1,0 +1,307 @@
+@using LeasiNetWeb.Application.DTOs
+@model InternePruefungDto
+@{
+    ViewData["Title"] = $"Interne Prüfung – {Model.AntragNummer}";
+    int antragId = (int)ViewData["AntragId"]!;
+    int anzahlGesamt = Model.Pflichten.Count();
+    int anzahlErfuellt = Model.Pflichten.Count(p => p.Erfuellt);
+    int pct = anzahlGesamt > 0 ? anzahlErfuellt * 100 / anzahlGesamt : 0;
+    bool alleErfuellt = anzahlGesamt > 0 && anzahlErfuellt == anzahlGesamt;
+}
+
+<div class="mc-page-header">
+    <div>
+        <div style="font-size:0.82rem; color:var(--mc-text-muted); margin-bottom:0.4rem;">
+            <a asp-action="Index" style="color:var(--mc-primary);">Interne Prüfungen</a>
+            <span style="margin:0 0.4rem;">/</span>
+            <a asp-controller="Antraege" asp-action="Details" asp-route-id="@antragId"
+               style="color:var(--mc-primary);">@Model.AntragNummer</a>
+            <span style="margin:0 0.4rem;">/</span>
+            <span>Prüfung</span>
+        </div>
+        <h1 class="mc-page-title" style="font-size:1.2rem;">
+            <i class="bi bi-shield-check me-2"></i>Interne Prüfung – <code>@Model.AntragNummer</code>
+            @if (Model.Abgeschlossen)
+            {
+                <span class="mc-badge badge-success ms-2">Abgeschlossen</span>
+            }
+            else if (alleErfuellt)
+            {
+                <span class="mc-badge badge-warning ms-2">Bereit zum Abschluss</span>
+            }
+            else
+            {
+                <span class="mc-badge badge-primary ms-2">In Bearbeitung</span>
+            }
+        </h1>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-controller="Antraege" asp-action="Details" asp-route-id="@antragId"
+           class="btn-mc-ghost">
+            <i class="bi bi-arrow-left me-1"></i> Zum Antrag
+        </a>
+    </div>
+</div>
+
+<!-- Fortschrittsanzeige -->
+<div class="mc-card mb-4">
+    <div class="mc-card-body" style="padding:1.25rem 1.5rem;">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <span style="font-size:0.9rem; font-weight:600;">Gesamtfortschritt</span>
+            <span style="font-size:0.9rem; color:var(--mc-text-muted);">@anzahlErfuellt von @anzahlGesamt Pflichten erfüllt</span>
+        </div>
+        <div style="background:var(--mc-border); border-radius:6px; height:10px; overflow:hidden;">
+            <div style="width:@pct%; background:@(pct==100 ? "var(--mc-success, #28a745)" : "var(--mc-primary)"); height:100%; transition:width .4s;"></div>
+        </div>
+        <div class="d-flex justify-content-between mt-2" style="font-size:0.78rem; color:var(--mc-text-muted);">
+            <span>Prüfer: <strong>@Model.PrueferMB</strong></span>
+            @if (Model.Abgeschlossen && Model.AbgeschlossenAm.HasValue)
+            {
+                <span>Abgeschlossen: @Model.AbgeschlossenAm.Value.ToString("dd.MM.yyyy HH:mm")</span>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Checkliste -->
+    <div class="col-lg-7">
+        <div class="mc-card">
+            <div class="mc-card-header">
+                <h2 class="mc-card-title"><i class="bi bi-list-check"></i> Prüfpflichten</h2>
+            </div>
+            <div style="padding:0;">
+                @foreach (var p in Model.Pflichten)
+                {
+                    <div class="mc-pruefpflicht @(p.Erfuellt ? "erfuellt" : "")">
+                        <div class="d-flex align-items-start gap-3">
+                            <div class="mc-pruefpflicht-icon">
+                                @if (p.Erfuellt)
+                                {
+                                    <i class="bi bi-check-circle-fill" style="color:var(--mc-success, #28a745); font-size:1.25rem;"></i>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-circle" style="color:var(--mc-border); font-size:1.25rem;"></i>
+                                }
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="fw-semibold" style="font-size:0.9rem; @(p.Erfuellt ? "text-decoration:line-through; color:var(--mc-text-muted);" : "")">
+                                    @p.Bezeichnung
+                                </div>
+                                @if (!string.IsNullOrEmpty(p.Beschreibung))
+                                {
+                                    <div style="font-size:0.8rem; color:var(--mc-text-muted); margin-top:0.15rem;">@p.Beschreibung</div>
+                                }
+                                @if (p.Erfuellt && !string.IsNullOrEmpty(p.Bemerkungen))
+                                {
+                                    <div class="mt-1 p-2 rounded" style="font-size:0.8rem; background:var(--mc-bg-alt, #f8f9fa); color:var(--mc-text-muted);">
+                                        <i class="bi bi-chat-text me-1"></i>@p.Bemerkungen
+                                    </div>
+                                }
+                                @if (p.Erfuellt && p.ErfuelltAm.HasValue)
+                                {
+                                    <div style="font-size:0.75rem; color:var(--mc-text-muted); margin-top:0.2rem;">
+                                        Erfüllt am @p.ErfuelltAm.Value.ToString("dd.MM.yyyy HH:mm")
+                                    </div>
+                                }
+                            </div>
+                            @if (!Model.Abgeschlossen)
+                            {
+                                <div class="mc-pruefpflicht-actions">
+                                    @if (!p.Erfuellt)
+                                    {
+                                        <button class="btn-mc-ghost" style="font-size:0.78rem; padding:0.2rem 0.5rem; color:var(--mc-primary);"
+                                                onclick="openErfuellenModal(@p.Id, '@p.Bezeichnung.Replace("'", "\\'")'); return false;"
+                                                title="Als erfüllt markieren">
+                                            <i class="bi bi-check-lg me-1"></i>Erfüllen
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <form asp-action="PflichtRueckgaengig" method="post" style="display:inline;">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="pflichtId" value="@p.Id" />
+                                            <input type="hidden" name="antragId" value="@antragId" />
+                                            <button type="submit" class="btn-mc-ghost"
+                                                    style="font-size:0.78rem; padding:0.2rem 0.5rem; color:var(--mc-text-muted);"
+                                                    title="Rückgängig machen">
+                                                <i class="bi bi-arrow-counterclockwise"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+
+            @if (!Model.Abgeschlossen)
+            {
+                <div class="mc-card-body" style="border-top:1px solid var(--mc-border); padding:1rem 1.5rem;">
+                    @if (alleErfuellt)
+                    {
+                        <button class="btn-mc-primary" data-bs-toggle="modal" data-bs-target="#abschliessenModal">
+                            <i class="bi bi-check2-all me-1"></i> Prüfung abschließen
+                        </button>
+                    }
+                    else
+                    {
+                        <button class="btn-mc-primary" disabled title="Alle Pflichten müssen erfüllt sein.">
+                            <i class="bi bi-check2-all me-1"></i> Prüfung abschließen
+                        </button>
+                        <span class="ms-2" style="font-size:0.8rem; color:var(--mc-text-muted);">
+                            Noch @(anzahlGesamt - anzahlErfuellt) Pflicht(en) offen
+                        </span>
+                    }
+                </div>
+            }
+            else if (!string.IsNullOrEmpty(Model.Ergebnis))
+            {
+                <div class="mc-card-body" style="border-top:1px solid var(--mc-border); padding:1rem 1.5rem;">
+                    <div class="mc-info-label">Ergebnis</div>
+                    <p class="mb-0" style="font-size:0.9rem;">@Model.Ergebnis</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Dokumente -->
+    <div class="col-lg-5">
+        <div class="mc-card">
+            <div class="mc-card-header">
+                <h2 class="mc-card-title"><i class="bi bi-paperclip"></i> Dokumente (@Model.Anhaenge.Count())</h2>
+            </div>
+            <div class="mc-card-body">
+                @if (!Model.Abgeschlossen)
+                {
+                    <form asp-action="AnhangHochladen" method="post" enctype="multipart/form-data" class="mb-3">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="pruefungId" value="@Model.Id" />
+                        <input type="hidden" name="antragId" value="@antragId" />
+                        <div class="input-group input-group-sm">
+                            <input type="file" name="datei" class="form-control form-control-sm"
+                                   accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.png" />
+                            <button type="submit" class="btn-mc-primary" style="padding:0.35rem 0.75rem;">
+                                <i class="bi bi-upload"></i>
+                            </button>
+                        </div>
+                    </form>
+                }
+
+                @if (!Model.Anhaenge.Any())
+                {
+                    <p class="text-center mb-0" style="font-size:0.82rem; color:var(--mc-text-muted); padding:1rem 0;">
+                        Keine Dokumente hochgeladen.
+                    </p>
+                }
+                else
+                {
+                    <ul class="list-unstyled mb-0">
+                        @foreach (var a in Model.Anhaenge)
+                        {
+                            <li class="d-flex align-items-center py-2" style="border-bottom:1px solid var(--mc-border);">
+                                <i class="bi bi-file-earmark-text me-2" style="color:var(--mc-text-muted);"></i>
+                                <div class="flex-grow-1" style="min-width:0;">
+                                    <div style="font-size:0.85rem; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">@a.Dateiname</div>
+                                    <div style="font-size:0.75rem; color:var(--mc-text-muted);">@a.HochgeladenVon &bull; @a.ErstelltAm.ToString("dd.MM.yyyy")</div>
+                                </div>
+                                <a asp-action="AnhangHerunterladen" asp-route-anhangId="@a.Id"
+                                   class="btn-mc-ghost ms-2" style="font-size:0.78rem; padding:0.2rem 0.5rem;"
+                                   title="Herunterladen">
+                                    <i class="bi bi-download"></i>
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Pflicht erfüllen -->
+<div class="modal fade" id="erfuellenModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <form asp-action="PflichtErfuellen" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="pflichtId" id="erfuellenPflichtId" value="" />
+                <input type="hidden" name="antragId" value="@antragId" />
+                <div class="modal-header">
+                    <h5 class="modal-title" style="font-size:1rem;">Pflicht erfüllen</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="small mb-3" id="erfuellenPflichtName" style="font-weight:600;"></p>
+                    <label class="mc-info-label">Bemerkung (optional)</label>
+                    <textarea name="bemerkungen" class="form-control form-control-sm" rows="3"
+                              placeholder="z.B. geprüft am, Referenz-Nr., …"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-mc-ghost" data-bs-dismiss="modal">Abbrechen</button>
+                    <button type="submit" class="btn-mc-primary">
+                        <i class="bi bi-check-lg me-1"></i>Erfüllen
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Abschließen -->
+<div class="modal fade" id="abschliessenModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="Abschliessen" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" />
+                <input type="hidden" name="antragId" value="@antragId" />
+                <div class="modal-header">
+                    <h5 class="modal-title">Prüfung abschließen</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="small text-muted mb-3">
+                        Nach dem Abschluss wird der Antrag <strong>@Model.AntragNummer</strong> wieder
+                        in den Status <em>Bei Mitarbeiter</em> gesetzt.
+                    </p>
+                    <label class="mc-info-label">Ergebnis / Zusammenfassung (optional)</label>
+                    <textarea name="ergebnis" class="form-control form-control-sm" rows="4"
+                              placeholder="Alle Prüfpflichten erfüllt. Keine Auffälligkeiten festgestellt."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-mc-ghost" data-bs-dismiss="modal">Abbrechen</button>
+                    <button type="submit" class="btn-mc-primary">
+                        <i class="bi bi-check2-all me-1"></i>Abschließen
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function openErfuellenModal(pflichtId, bezeichnung) {
+    document.getElementById('erfuellenPflichtId').value = pflichtId;
+    document.getElementById('erfuellenPflichtName').textContent = bezeichnung;
+    new bootstrap.Modal(document.getElementById('erfuellenModal')).show();
+}
+</script>
+}
+
+@section Styles {
+<style>
+.mc-pruefpflicht {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--mc-border);
+    transition: background .15s;
+}
+.mc-pruefpflicht:last-child { border-bottom: none; }
+.mc-pruefpflicht.erfuellt { background: rgba(40,167,69,0.04); }
+.mc-pruefpflicht-icon { width: 1.5rem; flex-shrink: 0; padding-top: 0.1rem; }
+.mc-pruefpflicht-actions { flex-shrink: 0; }
+</style>
+}

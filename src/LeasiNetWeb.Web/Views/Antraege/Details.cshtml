@@ -3,6 +3,7 @@
 @{
     ViewData["Title"] = $"Antrag {Model.AntragNummer}";
     bool kannGenehmigen = User.HasClaim("Rolle", "Genehmiger") || User.HasClaim("Rolle", "Administrator");
+    bool kannPruefen = User.HasClaim("Rolle", "InternerPruefer") || User.HasClaim("Rolle", "SachbearbeiterMB") || User.HasClaim("Rolle", "Administrator");
     var ablehnungsgruende = ViewBag.Ablehnungsgruende as System.Collections.Generic.List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>
         ?? new System.Collections.Generic.List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>();
 }
@@ -50,6 +51,24 @@
                     <button class="btn btn-warning">2. Vote anfordern</button>
                 </form>
             }
+        }
+        @if (kannPruefen && Model.Status == AntragStatus.BeiMitarbeiter)
+        {
+            <form asp-controller="InternePruefung" asp-action="Starten" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="antragId" value="@Model.Id" />
+                <button type="submit" class="btn btn-outline-info"
+                        onclick="return confirm('Interne Kontrolle für diesen Antrag starten?')">
+                    <i class="bi bi-shield-check me-1"></i>Int. Kontrolle starten
+                </button>
+            </form>
+        }
+        @if (kannPruefen && Model.Status == AntragStatus.InterneKontrolleErforderlich)
+        {
+            <a asp-controller="InternePruefung" asp-action="Details" asp-route-antragId="@Model.Id"
+               class="btn btn-info">
+                <i class="bi bi-shield-check me-1"></i>Zur Prüfung
+            </a>
         }
         @if ((Model.Status is AntragStatus.Genehmigt or AntragStatus.Abgelehnt or AntragStatus.Storniert) && !Model.Archiviert)
         {

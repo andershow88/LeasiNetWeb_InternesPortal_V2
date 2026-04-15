@@ -93,7 +93,14 @@ public static class DataSeeder
             IstAktiv = true, ErstelltAm = DateTime.UtcNow, GeaendertAm = DateTime.UtcNow,
             Leasinggesellschaft = lg1
         };
-        db.Benutzer.AddRange(admin, sachbearbeiter, genehmiger, lgUser);
+        var pruefer = new Benutzer
+        {
+            Benutzername = "pruefer.mb", PasswortHash = Hash("Demo1234!"),
+            Vorname = "Sandra", Nachname = "Prüferin",
+            EMail = "s.prueferin@leasinetweb.de", Rolle = BenutzerRolle.InternerPruefer,
+            IstAktiv = true, ErstelltAm = DateTime.UtcNow, GeaendertAm = DateTime.UtcNow
+        };
+        db.Benutzer.AddRange(admin, sachbearbeiter, genehmiger, lgUser, pruefer);
 
         // ── Hilfe-Texte ────────────────────────────────────────────────────────
         db.HilfeTexte.AddRange(

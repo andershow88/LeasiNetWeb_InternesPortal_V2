@@ -1,8 +1,8 @@
 using Hangfire;
 using Hangfire.InMemory;
 using LeasiNetWeb.Application.Interfaces;
-using LeasiNetWeb.Web;
 using LeasiNetWeb.Application.Services;
+using LeasiNetWeb.Web;
 using IAdminService = LeasiNetWeb.Application.Interfaces.IAdminService;
 using AdminService = LeasiNetWeb.Application.Services.AdminService;
 using LeasiNetWeb.Infrastructure.Data;
@@ -82,6 +82,7 @@ builder.Services.AddScoped<IAnhangService, AnhangServiceImpl>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<ILeasingantragService, LeasingantragService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<IInternePruefungService, InternePruefungService>();
 builder.Services.AddScoped<BereinigungsJob>();
 Checkpoint("5 – application services registered");
 
