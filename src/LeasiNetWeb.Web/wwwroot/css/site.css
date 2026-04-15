@@ -1,0 +1,72 @@
+/* ── LeasiNetWeb Corporate Design ─────────────────────────────────────────── */
+:root {
+    --lnw-primary:   #1a3c6e;
+    --lnw-secondary: #2d5fa3;
+    --lnw-accent:    #e8f0fc;
+    --lnw-text:      #1a1a2e;
+}
+
+html { font-size: 14px; }
+@media (min-width: 768px) { html { font-size: 15px; } }
+
+/* ── Layout ────────────────────────────────────────────────────────────────── */
+.lnw-body {
+    background-color: #f4f6fb;
+    color: var(--lnw-text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.lnw-content { flex: 1; padding: 1.5rem; }
+
+/* ── Navbar ────────────────────────────────────────────────────────────────── */
+.lnw-navbar {
+    background-color: var(--lnw-primary);
+    padding: 0.5rem 1.5rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,.2);
+}
+.lnw-navbar .nav-link,
+.lnw-navbar .navbar-brand { color: rgba(255,255,255,.9) !important; }
+.lnw-navbar .nav-link:hover { color: #fff !important; }
+.lnw-navbar .dropdown-menu { border: none; box-shadow: 0 4px 12px rgba(0,0,0,.15); }
+
+.lnw-brand { font-weight: 700; font-size: 1.1rem; letter-spacing: .5px; }
+
+/* ── Footer ────────────────────────────────────────────────────────────────── */
+.lnw-footer {
+    background-color: var(--lnw-primary);
+    color: rgba(255,255,255,.6);
+    padding: .6rem 1.5rem;
+    font-size: .8rem;
+    margin-top: auto;
+}
+
+/* ── Login ────────────────────────────────────────────────────────────────── */
+.lnw-login-body { background-color: var(--lnw-primary); }
+.lnw-login-card { border-radius: 12px; }
+.lnw-brand-icon { color: var(--lnw-primary); }
+
+/* ── KPI Cards ─────────────────────────────────────────────────────────────── */
+.lnw-kpi-card { border-radius: 8px; }
+.lnw-kpi-icon {
+    width: 48px; height: 48px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+}
+.lnw-kpi-value { font-size: 1.5rem; font-weight: 700; line-height: 1.2; }
+.lnw-kpi-label { font-size: .75rem; color: #6c757d; }
+
+/* ── Cards ─────────────────────────────────────────────────────────────────── */
+.card { border-radius: 8px; border: 1px solid #e2e8f0; }
+.card-header { background-color: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: .75rem 1rem; }
+
+/* ── Tables ────────────────────────────────────────────────────────────────── */
+.table th { font-size: .8rem; text-transform: uppercase; letter-spacing: .5px; color: #6c757d; }
+.table-hover tbody tr:hover { background-color: var(--lnw-accent); }
+
+/* ── Misc ──────────────────────────────────────────────────────────────────── */
+code { background-color: #f0f4ff; padding: 2px 6px; border-radius: 4px; color: var(--lnw-secondary); font-size: .9em; }
+.btn:focus { box-shadow: 0 0 0 0.2rem rgba(26,60,110,.25); }

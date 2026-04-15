@@ -1,0 +1,176 @@
+@using LeasiNetWeb.Domain.Enums
+@model LeasiNetWeb.Application.DTOs.DashboardDto
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0"><i class="bi bi-speedometer2 me-2"></i>Dashboard</h1>
+    <a asp-controller="Antraege" asp-action="Neu" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1"></i> Neuer Antrag
+    </a>
+</div>
+
+<!-- KPI-Kacheln -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card lnw-kpi-card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="lnw-kpi-icon bg-warning-subtle text-warning me-3">
+                        <i class="bi bi-inbox"></i>
+                    </div>
+                    <div>
+                        <div class="lnw-kpi-value">@Model.OffeneAntraege</div>
+                        <div class="lnw-kpi-label">Offene Anträge</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card lnw-kpi-card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="lnw-kpi-icon bg-info-subtle text-info me-3">
+                        <i class="bi bi-arrow-repeat"></i>
+                    </div>
+                    <div>
+                        <div class="lnw-kpi-value">@Model.AntraegeInBearbeitung</div>
+                        <div class="lnw-kpi-label">In Bearbeitung</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card lnw-kpi-card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="lnw-kpi-icon bg-success-subtle text-success me-3">
+                        <i class="bi bi-check2-circle"></i>
+                    </div>
+                    <div>
+                        <div class="lnw-kpi-value">@Model.AktiveVertraege</div>
+                        <div class="lnw-kpi-label">Aktive Verträge</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card lnw-kpi-card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="lnw-kpi-icon bg-primary-subtle text-primary me-3">
+                        <i class="bi bi-currency-euro"></i>
+                    </div>
+                    <div>
+                        <div class="lnw-kpi-value">@Model.GesamtObligoAktiv.ToString("N0") €</div>
+                        <div class="lnw-kpi-label">Obligo gesamt</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Aktionserforderlich -->
+@if (Model.ZuPruefendeAntraege > 0 || Model.ZuGenehmigendeAntraege > 0 || Model.PendingZweiteVoten > 0 || Model.UngeleseneNachrichten > 0)
+{
+    <div class="alert alert-info d-flex flex-wrap gap-3 align-items-center mb-4">
+        <strong><i class="bi bi-bell me-1"></i>Handlungsbedarf:</strong>
+        @if (Model.ZuPruefendeAntraege > 0)
+        {
+            <a asp-controller="Antraege" asp-action="MeinePruefungen" class="badge bg-warning text-dark text-decoration-none">
+                @Model.ZuPruefendeAntraege zu prüfen
+            </a>
+        }
+        @if (Model.ZuGenehmigendeAntraege > 0)
+        {
+            <a asp-controller="Antraege" asp-action="MeineGenehmigungen" class="badge bg-danger text-decoration-none">
+                @Model.ZuGenehmigendeAntraege zu genehmigen
+            </a>
+        }
+        @if (Model.PendingZweiteVoten > 0)
+        {
+            <a asp-controller="Antraege" asp-action="MeineZweiteVoten" class="badge bg-primary text-decoration-none">
+                @Model.PendingZweiteVoten 2. Vote ausstehend
+            </a>
+        }
+        @if (Model.UngeleseneNachrichten > 0)
+        {
+            <a asp-controller="Nachrichten" asp-action="Index" class="badge bg-secondary text-decoration-none">
+                @Model.UngeleseneNachrichten ungelesene Nachrichten
+            </a>
+        }
+    </div>
+}
+
+<!-- Meine aktuellen Anträge -->
+<div class="card shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Meine aktuellen Anträge</h5>
+        <a asp-controller="Antraege" asp-action="Index" class="btn btn-sm btn-outline-secondary">Alle anzeigen</a>
+    </div>
+    <div class="card-body p-0">
+        @if (!Model.MeineAktuellenAntraege.Any())
+        {
+            <div class="text-center text-muted py-4">
+                <i class="bi bi-inbox fs-3"></i>
+                <p class="mt-2">Keine aktuellen Anträge vorhanden.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Antrag-Nr.</th>
+                            <th>Typ</th>
+                            <th>Status</th>
+                            <th>Leasinggesellschaft</th>
+                            <th class="text-end">Obligo</th>
+                            <th>Geändert</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var antrag in Model.MeineAktuellenAntraege)
+                        {
+                            <tr>
+                                <td><code>@antrag.AntragNummer</code></td>
+                                <td>@antrag.AntragTyp</td>
+                                <td><span class="badge @StatusBadgeClass(antrag.Status)">@antrag.Status</span></td>
+                                <td>@(antrag.Leasinggesellschaft ?? "–")</td>
+                                <td class="text-end">@antrag.Obligo.ToString("N2") €</td>
+                                <td class="text-muted small">@antrag.GeaendertAm.ToString("dd.MM.yyyy HH:mm")</td>
+                                <td>
+                                    <a asp-controller="Antraege" asp-action="Details" asp-route-id="@antrag.Id"
+                                       class="btn btn-sm btn-outline-primary">Details</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@functions {
+    private static string StatusBadgeClass(LeasiNetWeb.Domain.Enums.AntragStatus status) => status switch
+    {
+        AntragStatus.Entwurf => "bg-secondary",
+        AntragStatus.Eingereicht => "bg-warning text-dark",
+        AntragStatus.InPruefung => "bg-info text-dark",
+        AntragStatus.BeiMitarbeiter => "bg-primary",
+        AntragStatus.BeiLeasinggesellschaft => "bg-info",
+        AntragStatus.ZweiteVoteErforderlich => "bg-warning text-dark",
+        AntragStatus.Genehmigt => "bg-success",
+        AntragStatus.Abgelehnt => "bg-danger",
+        AntragStatus.Archiviert => "bg-light text-dark",
+        _ => "bg-secondary"
+    };
+}

@@ -1,0 +1,32 @@
+@model IEnumerable<LeasiNetWeb.Domain.Entities.HilfeText>
+@{
+    ViewData["Title"] = "Hilfe & Informationen";
+}
+
+<h1 class="h3 mb-4"><i class="bi bi-question-circle me-2"></i>Hilfe & Informationen</h1>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">Keine Hilfe-Texte verfügbar.</div>
+}
+else
+{
+    <div class="accordion" id="hilfeAccordion">
+        @foreach (var (hilfe, i) in Model.Select((h, idx) => (h, idx)))
+        {
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button @(i > 0 ? "collapsed" : "")" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#hilfe-@hilfe.Id">
+                        @hilfe.Titel
+                    </button>
+                </h2>
+                <div id="hilfe-@hilfe.Id" class="accordion-collapse collapse @(i == 0 ? "show" : "")">
+                    <div class="accordion-body">
+                        @Html.Raw(hilfe.Inhalt)
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

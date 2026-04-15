@@ -1,0 +1,63 @@
+@model LeasiNetWeb.Web.ViewModels.NachrichtSendenViewModel
+@{
+    ViewData["Title"] = "Neue Nachricht";
+}
+
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1">
+            <li class="breadcrumb-item"><a asp-action="Index">Nachrichten</a></li>
+            <li class="breadcrumb-item active">Neue Nachricht</li>
+        </ol>
+    </nav>
+    <h1 class="h3"><i class="bi bi-pencil-square me-2"></i>Neue Nachricht</h1>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <form asp-action="Neu" method="post">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger small"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="EmpfaengerId" class="form-label fw-semibold"></label>
+                        <select asp-for="EmpfaengerId" asp-items="ViewBag.Empfaenger" class="form-select">
+                            <option value="">Empfänger wählen…</option>
+                        </select>
+                        <span asp-validation-for="EmpfaengerId" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="LeasingantragId" class="form-label fw-semibold">Bezug: Antrag (optional)</label>
+                        <input asp-for="LeasingantragId" class="form-control" type="number" placeholder="Antrag-ID" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Betreff" class="form-label fw-semibold"></label>
+                        <input asp-for="Betreff" class="form-control" />
+                        <span asp-validation-for="Betreff" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="Text" class="form-label fw-semibold"></label>
+                        <textarea asp-for="Text" class="form-control" rows="6"></textarea>
+                        <span asp-validation-for="Text" class="text-danger small"></span>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-send me-1"></i> Senden
+                        </button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">Abbrechen</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

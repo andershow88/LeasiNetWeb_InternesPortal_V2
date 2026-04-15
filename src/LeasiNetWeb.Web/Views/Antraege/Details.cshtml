@@ -1,0 +1,267 @@
+@using LeasiNetWeb.Domain.Enums
+@model LeasiNetWeb.Application.DTOs.AntragDetailDto
+@{
+    ViewData["Title"] = $"Antrag {Model.AntragNummer}";
+    bool kannGenehmigen = User.HasClaim("Rolle", "Genehmiger") || User.HasClaim("Rolle", "Administrator");
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a asp-action="Index">Anträge</a></li>
+                <li class="breadcrumb-item active">@Model.AntragNummer</li>
+            </ol>
+        </nav>
+        <h1 class="h3 mb-0">
+            <i class="bi bi-file-earmark-text me-2"></i>@Model.AntragNummer
+            <span class="badge @StatusBadgeClass(Model.Status) ms-2">@Model.Status</span>
+            @if (Model.ZweiteVoteErforderlich) { <span class="badge bg-warning text-dark ms-1">2. Vote</span> }
+        </h1>
+    </div>
+    <!-- Aktionsbuttons -->
+    <div class="d-flex gap-2">
+        @if (Model.Status == AntragStatus.Entwurf)
+        {
+            <form asp-action="Einreichen" asp-route-id="@Model.Id" method="post">
+                @Html.AntiForgeryToken()
+                <button class="btn btn-primary">Einreichen</button>
+            </form>
+        }
+        @if (Model.Status == AntragStatus.Eingereicht)
+        {
+            <form asp-action="InPruefung" asp-route-id="@Model.Id" method="post">
+                @Html.AntiForgeryToken()
+                <button class="btn btn-info">In Prüfung nehmen</button>
+            </form>
+        }
+        @if (kannGenehmigen && Model.Status is AntragStatus.BeiMitarbeiter or AntragStatus.ZweiteVoteErforderlich)
+        {
+            <form asp-action="Genehmigen" asp-route-id="@Model.Id" method="post">
+                @Html.AntiForgeryToken()
+                <button class="btn btn-success">Genehmigen</button>
+            </form>
+            <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#ablehnungModal">Ablehnen</button>
+            @if (Model.Status == AntragStatus.BeiMitarbeiter && !Model.ZweiteVoteErforderlich)
+            {
+                <form asp-action="ZweiteVoteAnfordern" asp-route-id="@Model.Id" method="post">
+                    @Html.AntiForgeryToken()
+                    <button class="btn btn-warning">2. Vote anfordern</button>
+                </form>
+            }
+        }
+        @if ((Model.Status is AntragStatus.Genehmigt or AntragStatus.Abgelehnt or AntragStatus.Storniert) && !Model.Archiviert)
+        {
+            <form asp-action="Archivieren" asp-route-id="@Model.Id" method="post">
+                @Html.AntiForgeryToken()
+                <button class="btn btn-outline-secondary">Archivieren</button>
+            </form>
+        }
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Stammdaten -->
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header"><h6 class="mb-0">Stammdaten</h6></div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-5">Antrag-Nr.</dt><dd class="col-7"><code>@Model.AntragNummer</code></dd>
+                    <dt class="col-5">Typ</dt><dd class="col-7">@Model.AntragTyp</dd>
+                    <dt class="col-5">Obligo</dt><dd class="col-7 fw-bold">@Model.Obligo.ToString("N2") €</dd>
+                    <dt class="col-5">Abrechnungsart</dt><dd class="col-7">@(Model.Abrechnungsart ?? "–")</dd>
+                    <dt class="col-5">Leasinggesellschaft</dt><dd class="col-7">@(Model.Leasinggesellschaft ?? "–")</dd>
+                    <dt class="col-5">Eingereicht von</dt><dd class="col-7">@Model.EingereichtVon</dd>
+                    <dt class="col-5">Sachbearbeiter MB</dt><dd class="col-7">@(Model.SachbearbeiterMB ?? "–")</dd>
+                    <dt class="col-5">Sachbearbeiter LG</dt><dd class="col-7">@(Model.SachbearbeiterLG ?? "–")</dd>
+                    <dt class="col-5">Erstellt</dt><dd class="col-7">@Model.ErstelltAm.ToString("dd.MM.yyyy HH:mm")</dd>
+                    <dt class="col-5">Zuletzt geändert</dt><dd class="col-7">@Model.GeaendertAm.ToString("dd.MM.yyyy HH:mm")</dd>
+                    @if (Model.Status == AntragStatus.Abgelehnt)
+                    {
+                        <dt class="col-5 text-danger">Ablehnung</dt>
+                        <dd class="col-7 text-danger">@(Model.Ablehnungsgrund ?? "–")</dd>
+                        @if (!string.IsNullOrEmpty(Model.AblehnungsKommentar))
+                        {
+                            <dt class="col-5"></dt><dd class="col-7 text-muted small">@Model.AblehnungsKommentar</dd>
+                        }
+                    }
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <!-- Objekte -->
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header"><h6 class="mb-0">Leasingobjekte (@Model.Objekte.Count())</h6></div>
+            <div class="card-body p-0">
+                @if (!Model.Objekte.Any())
+                {
+                    <p class="text-muted text-center py-3 small">Keine Objekte hinterlegt.</p>
+                }
+                else
+                {
+                    <ul class="list-group list-group-flush">
+                        @foreach (var obj in Model.Objekte)
+                        {
+                            <li class="list-group-item">
+                                <div class="fw-semibold">@obj.Bezeichnung</div>
+                                <div class="small text-muted">
+                                    @(obj.Geraetetyp ?? "–") &bull;
+                                    @(obj.IstNeu ? "Neu" : "Gebraucht") &bull;
+                                    Basis: <strong>@obj.FinanzierungsBasis.ToString("N2") €</strong>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Dokumente -->
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">Dokumente (@Model.Anhaenge.Count())</h6>
+            </div>
+            <div class="card-body">
+                <form asp-action="AnhangHochladen" method="post" enctype="multipart/form-data" class="mb-3">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="antragId" value="@Model.Id" />
+                    <div class="input-group">
+                        <input type="file" name="datei" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.png" />
+                        <button type="submit" class="btn btn-sm btn-outline-primary">Hochladen</button>
+                    </div>
+                </form>
+                @if (Model.Anhaenge.Any())
+                {
+                    <ul class="list-unstyled mb-0">
+                        @foreach (var anhang in Model.Anhaenge)
+                        {
+                            <li class="d-flex align-items-center py-1 border-bottom">
+                                <i class="bi bi-file-earmark me-2 text-muted"></i>
+                                <div class="flex-grow-1 small">
+                                    <div>@anhang.Dateiname</div>
+                                    <div class="text-muted">@anhang.HochgeladenVon &bull; @anhang.ErstelltAm.ToString("dd.MM.yyyy")</div>
+                                </div>
+                                <a asp-action="AnhangHerunterladen" asp-route-anhangId="@anhang.Id"
+                                   class="btn btn-sm btn-outline-secondary ms-2">
+                                    <i class="bi bi-download"></i>
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Kommentare -->
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header"><h6 class="mb-0">Kommentare (@Model.Kommentare.Count())</h6></div>
+            <div class="card-body">
+                <form asp-action="KommentarHinzufuegen" method="post" class="mb-3">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="antragId" value="@Model.Id" />
+                    <textarea name="text" class="form-control form-control-sm mb-2" rows="2" placeholder="Kommentar eingeben…"></textarea>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="form-check form-check-inline">
+                            <input type="checkbox" name="istIntern" value="true" class="form-check-input" id="istIntern" />
+                            <label class="form-check-label small" for="istIntern">Intern (nicht für LG sichtbar)</label>
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-primary">Hinzufügen</button>
+                    </div>
+                </form>
+                @foreach (var k in Model.Kommentare)
+                {
+                    <div class="border rounded p-2 mb-2 @(k.IstIntern ? "bg-light border-warning" : "")">
+                        <div class="d-flex justify-content-between mb-1">
+                            <strong class="small">@k.Autor</strong>
+                            <span class="text-muted small">@k.ErstelltAm.ToString("dd.MM.yyyy HH:mm")</span>
+                        </div>
+                        @if (k.IstIntern) { <span class="badge bg-warning text-dark small mb-1">Intern</span> }
+                        <p class="mb-0 small">@k.Text</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Ereignisprotokoll -->
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-clock-history me-1"></i>Ereignisprotokoll</h6>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    @foreach (var e in Model.Ereignisse)
+                    {
+                        <li class="list-group-item small">
+                            <span class="text-muted">@e.ErstelltAm.ToString("dd.MM.yyyy HH:mm")</span>
+                            &mdash;
+                            <strong>@e.Typ</strong>
+                            von <em>@e.AusgeloestVon</em>
+                            @if (!string.IsNullOrEmpty(e.Beschreibung)) { <span class="text-muted">&mdash; @e.Beschreibung</span> }
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ablehnungs-Modal -->
+<div class="modal fade" id="ablehnungModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="Ablehnen" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" />
+                <div class="modal-header">
+                    <h5 class="modal-title">Antrag ablehnen</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Ablehnungsgrund</label>
+                        <select name="ablehnungsgrundId" class="form-select" required>
+                            <option value="">Bitte wählen…</option>
+                            @foreach (var ag in ViewBag.Ablehnungsgruende as IEnumerable<SelectListItem> ?? [])
+                            {
+                                <option value="@ag.Value">@ag.Text</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Kommentar (optional)</label>
+                        <textarea name="kommentar" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                    <button type="submit" class="btn btn-danger">Ablehnen</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@functions {
+    private static string StatusBadgeClass(AntragStatus status) => status switch
+    {
+        AntragStatus.Entwurf => "bg-secondary",
+        AntragStatus.Eingereicht => "bg-warning text-dark",
+        AntragStatus.InPruefung => "bg-info text-dark",
+        AntragStatus.BeiMitarbeiter => "bg-primary",
+        AntragStatus.BeiLeasinggesellschaft => "bg-info",
+        AntragStatus.ZweiteVoteErforderlich => "bg-warning text-dark",
+        AntragStatus.Genehmigt => "bg-success",
+        AntragStatus.Abgelehnt => "bg-danger",
+        AntragStatus.Archiviert => "bg-light text-dark",
+        _ => "bg-secondary"
+    };
+}

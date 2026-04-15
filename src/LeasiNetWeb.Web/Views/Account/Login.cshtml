@@ -1,0 +1,71 @@
+@model LeasiNetWeb.Web.ViewModels.LoginViewModel
+@{
+    Layout = null;
+    ViewData["Title"] = "Anmelden";
+}
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LeasiNetWeb – Anmelden</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body class="lnw-login-body">
+<div class="container">
+    <div class="row justify-content-center align-items-center min-vh-100">
+        <div class="col-md-5 col-lg-4">
+            <div class="card lnw-login-card shadow-sm">
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <i class="bi bi-building fs-1 lnw-brand-icon"></i>
+                        <h2 class="mt-2 fw-bold">LeasiNetWeb</h2>
+                        <p class="text-muted small">Internes Leasing-Portal</p>
+                    </div>
+
+                    <form asp-action="Login" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
+
+                        <div asp-validation-summary="All" class="alert alert-danger py-2 small" style="display:@(ViewContext.ModelState.IsValid ? "none" : "block")"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="Benutzername" class="form-label fw-semibold"></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                <input asp-for="Benutzername" class="form-control" placeholder="Benutzername" autofocus autocomplete="username" />
+                            </div>
+                            <span asp-validation-for="Benutzername" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Passwort" class="form-label fw-semibold"></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                                <input asp-for="Passwort" class="form-control" placeholder="Passwort" autocomplete="current-password" />
+                            </div>
+                            <span asp-validation-for="Passwort" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-4 form-check">
+                            <input asp-for="MerkenAuf" class="form-check-input" />
+                            <label asp-for="MerkenAuf" class="form-check-label small"></label>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 fw-semibold">
+                            <i class="bi bi-box-arrow-in-right me-1"></i> Anmelden
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+<script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+</body>
+</html>
