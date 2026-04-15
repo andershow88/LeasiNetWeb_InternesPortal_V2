@@ -120,6 +120,7 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddDataProtection()
     .PersistKeysToDbContext<ApplicationDbContext>();
 
+builder.Services.AddHttpClient();
 builder.Services.AddHttpContextAccessor();
 Checkpoint("7 – auth registered");
 
