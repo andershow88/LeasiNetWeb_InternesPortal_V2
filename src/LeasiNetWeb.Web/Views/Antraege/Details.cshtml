@@ -38,6 +38,16 @@
                 <button class="btn btn-info">In Prüfung nehmen</button>
             </form>
         }
+        @if (Model.Status == AntragStatus.InPruefung &&
+             (User.HasClaim("Rolle", "SachbearbeiterMB") || User.HasClaim("Rolle", "Administrator")))
+        {
+            <form asp-action="PruefungAbschliessen" asp-route-id="@Model.Id" method="post">
+                @Html.AntiForgeryToken()
+                <button class="btn btn-primary">
+                    <i class="bi bi-check2 me-1"></i>Prüfung abschließen
+                </button>
+            </form>
+        }
         @if (kannGenehmigen && Model.Status is AntragStatus.BeiMitarbeiter or AntragStatus.ZweiteVoteErforderlich)
         {
             <form asp-action="Genehmigen" asp-route-id="@Model.Id" method="post">

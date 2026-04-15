@@ -126,6 +126,16 @@ public class AntraegeController : BaseController
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    public async Task<IActionResult> PruefungAbschliessen(int id)
+    {
+        if (AktuelleRolle is not ("SachbearbeiterMB" or "Administrator"))
+            return Forbid();
+        await _antraege.StatusWechsel(id, AntragStatus.BeiMitarbeiter, AktuellerBenutzerId);
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Genehmigen(int id)
     {
         if (!IstGenehmiger) return Forbid();
