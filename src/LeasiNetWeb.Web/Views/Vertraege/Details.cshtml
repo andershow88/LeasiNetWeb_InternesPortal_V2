@@ -1,0 +1,280 @@
+@using LeasiNetWeb.Application.DTOs
+@using LeasiNetWeb.Domain.Enums
+@model VertragDetailDto
+@{
+    ViewData["Title"] = $"Vertrag {Model.VertragNummer}";
+}
+
+<div class="mc-page-header">
+    <div>
+        <div style="font-size:0.82rem; color:var(--mc-text-muted); margin-bottom:0.4rem;">
+            <a asp-action="Index" style="color:var(--mc-primary);">Verträge</a>
+            <span style="margin:0 0.4rem;">/</span>
+            <span>@Model.VertragNummer</span>
+        </div>
+        <h1 class="mc-page-title" style="font-size:1.2rem;">
+            <i class="bi bi-file-earmark-ruled me-2"></i>@Model.VertragNummer
+            <span class="mc-badge @StatusBadgeClass(Model.Status) ms-2">@StatusLabel(Model.Status)</span>
+        </h1>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        @if (Model.Status == VertragStatus.InVorbereitung)
+        {
+            <a asp-action="Bearbeiten" asp-route-id="@Model.Id" class="btn-mc-ghost">
+                <i class="bi bi-pencil me-1"></i>Bearbeiten
+            </a>
+            <form asp-action="Aktivieren" asp-route-id="@Model.Id" method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn-mc-primary"
+                        onclick="return confirm('Vertrag aktivieren?')">
+                    <i class="bi bi-play-circle me-1"></i>Aktivieren
+                </button>
+            </form>
+        }
+        @if (Model.Status == VertragStatus.Aktiv)
+        {
+            <form asp-action="Beenden" asp-route-id="@Model.Id" method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn-mc-ghost"
+                        onclick="return confirm('Vertrag regulär beenden?')">
+                    <i class="bi bi-stop-circle me-1"></i>Beenden
+                </button>
+            </form>
+            <form asp-action="Kuendigen" asp-route-id="@Model.Id" method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn-mc-ghost" style="color:#b05050;"
+                        onclick="return confirm('Vertrag kündigen?')">
+                    <i class="bi bi-x-circle me-1"></i>Kündigen
+                </button>
+            </form>
+        }
+        @if (Model.Status is VertragStatus.Beendet or VertragStatus.Gekuendigt)
+        {
+            <form asp-action="Archivieren" asp-route-id="@Model.Id" method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn-mc-ghost"
+                        onclick="return confirm('Vertrag archivieren?')">
+                    <i class="bi bi-archive me-1"></i>Archivieren
+                </button>
+            </form>
+        }
+        <a asp-controller="Antraege" asp-action="Details" asp-route-id="@Model.LeasingantragId"
+           class="btn-mc-ghost">
+            <i class="bi bi-file-earmark-text me-1"></i>Zum Antrag
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+
+    <!-- Vertragsdaten -->
+    <div class="col-md-6">
+        <div class="mc-card h-100">
+            <div class="mc-card-header">
+                <h2 class="mc-card-title"><i class="bi bi-card-text"></i> Vertragsdaten</h2>
+            </div>
+            <div class="mc-card-body">
+                <dl class="mc-info-grid">
+                    <div class="mc-info-row">
+                        <span class="mc-info-label">Vertrag-Nr.</span>
+                        <span class="mc-info-value"><code>@Model.VertragNummer</code></span>
+                    </div>
+                    <div class="mc-info-row">
+                        <span class="mc-info-label">Antrag</span>
+                        <span class="mc-info-value">
+                            <a asp-controller="Antraege" asp-action="Details" asp-route-id="@Model.LeasingantragId"
+                               style="color:var(--mc-primary);">@Model.AntragNummer</a>
+                        </span>
+                    </div>
+                    <div class="mc-info-row">
+                        <span class="mc-info-label">Leasinggesellschaft</span>
+                        <span class="mc-info-value">@(Model.Leasinggesellschaft ?? "–")</span>
+                    </div>
+                    <div class="mc-info-row">
+                        <span class="mc-info-label">Eingereicht von</span>
+                        <span class="mc-info-value">@Model.EingereichtVon</span>
+                    </div>
+                    <div class="mc-info-row">
+                        <span class="mc-info-label">Vertragstyp</span>
+                        <span class="mc-info-value">@(Model.Vertragstyp ?? "–")</span>
+                    </div>
+                    <div class="mc-info-row">
+                        <span class="mc-info-label">Erstellt</span>
+                        <span class="mc-info-value">@Model.ErstelltAm.ToString("dd.MM.yyyy HH:mm")</span>
+                    </div>
+                    <div class="mc-info-row">
+                        <span class="mc-info-label">Geändert</span>
+                        <span class="mc-info-value">@Model.GeaendertAm.ToString("dd.MM.yyyy HH:mm")</span>
+                    </div>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <!-- Finanzdaten -->
+    <div class="col-md-6">
+        <div class="mc-card h-100">
+            <div class="mc-card-header">
+                <h2 class="mc-card-title"><i class="bi bi-cash-coin"></i> Finanzdaten</h2>
+            </div>
+            <div class="mc-card-body">
+                <dl class="mc-info-grid">
+                    <div class="mc-info-row">
+                        <span class="mc-info-label">Finanzierungsbetrag</span>
+                        <span class="mc-info-value fw-bold" style="font-size:1.1rem;">
+                            @Model.Finanzierungsbetrag.ToString("N2") €
+                        </span>
+                    </div>
+                    <div class="mc-info-row">
+                        <span class="mc-info-label">Monatliche Rate</span>
+                        <span class="mc-info-value">
+                            @(Model.MonatlicheRate.HasValue ? $"{Model.MonatlicheRate.Value:N2} €" : "–")
+                        </span>
+                    </div>
+                    <div class="mc-info-row">
+                        <span class="mc-info-label">Restwert</span>
+                        <span class="mc-info-value">
+                            @(Model.Restwert.HasValue ? $"{Model.Restwert.Value:N2} €" : "–")
+                        </span>
+                    </div>
+                    <div class="mc-info-row">
+                        <span class="mc-info-label">Zinssatz</span>
+                        <span class="mc-info-value">
+                            @(Model.Zinssatz.HasValue ? $"{Model.Zinssatz.Value:N2} %" : "–")
+                        </span>
+                    </div>
+                    <div class="mc-info-row">
+                        <span class="mc-info-label">Laufzeit</span>
+                        <span class="mc-info-value">
+                            @(Model.LaufzeitMonate.HasValue ? $"{Model.LaufzeitMonate} Monate" : "–")
+                        </span>
+                    </div>
+                    <div class="mc-info-row">
+                        <span class="mc-info-label">Vertragsbeginn</span>
+                        <span class="mc-info-value">
+                            @(Model.Vertragsbeginn.HasValue ? Model.Vertragsbeginn.Value.ToString("dd.MM.yyyy") : "–")
+                        </span>
+                    </div>
+                    <div class="mc-info-row">
+                        <span class="mc-info-label">Vertragsende</span>
+                        <span class="mc-info-value">
+                            @(Model.Vertragsende.HasValue ? Model.Vertragsende.Value.ToString("dd.MM.yyyy") : "–")
+                        </span>
+                    </div>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leasingobjekte -->
+    <div class="col-md-6">
+        <div class="mc-card">
+            <div class="mc-card-header">
+                <h2 class="mc-card-title"><i class="bi bi-box-seam"></i> Leasingobjekte (@Model.Objekte.Count())</h2>
+            </div>
+            <div style="padding:0;">
+                @if (!Model.Objekte.Any())
+                {
+                    <p class="text-center py-3 mb-0" style="font-size:0.82rem; color:var(--mc-text-muted);">Keine Objekte hinterlegt.</p>
+                }
+                else
+                {
+                    <table class="mc-table">
+                        <thead>
+                            <tr>
+                                <th>Bezeichnung</th>
+                                <th>Typ</th>
+                                <th>Basis</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var o in Model.Objekte)
+                            {
+                                <tr>
+                                    <td>
+                                        <div style="font-weight:500;">@o.Bezeichnung</div>
+                                        <div style="font-size:0.78rem; color:var(--mc-text-muted);">
+                                            @(o.IstNeu ? "Neu" : "Gebraucht")
+                                            @if (!string.IsNullOrEmpty(o.Hersteller)) { <span>&bull; @o.Hersteller</span> }
+                                        </div>
+                                    </td>
+                                    <td style="color:var(--mc-text-muted); font-size:0.82rem;">@(o.Geraetetyp ?? "–")</td>
+                                    <td class="fw-semibold">@o.FinanzierungsBasis.ToString("N2") €</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Dokumente -->
+    <div class="col-md-6">
+        <div class="mc-card">
+            <div class="mc-card-header">
+                <h2 class="mc-card-title"><i class="bi bi-paperclip"></i> Dokumente (@Model.Anhaenge.Count())</h2>
+            </div>
+            <div class="mc-card-body">
+                @if (Model.Status != VertragStatus.Archiviert)
+                {
+                    <form asp-action="AnhangHochladen" method="post" enctype="multipart/form-data" class="mb-3">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="vertragId" value="@Model.Id" />
+                        <div class="input-group input-group-sm">
+                            <input type="file" name="datei" class="form-control form-control-sm"
+                                   accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.png" />
+                            <button type="submit" class="btn-mc-primary" style="padding:0.35rem 0.75rem;">
+                                <i class="bi bi-upload"></i>
+                            </button>
+                        </div>
+                    </form>
+                }
+                @if (!Model.Anhaenge.Any())
+                {
+                    <p class="text-center mb-0" style="font-size:0.82rem; color:var(--mc-text-muted);">Keine Dokumente hochgeladen.</p>
+                }
+                else
+                {
+                    <ul class="list-unstyled mb-0">
+                        @foreach (var a in Model.Anhaenge)
+                        {
+                            <li class="d-flex align-items-center py-2" style="border-bottom:1px solid var(--mc-border);">
+                                <i class="bi bi-file-earmark-text me-2" style="color:var(--mc-text-muted);"></i>
+                                <div class="flex-grow-1" style="min-width:0;">
+                                    <div style="font-size:0.85rem; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">@a.Dateiname</div>
+                                    <div style="font-size:0.75rem; color:var(--mc-text-muted);">@a.HochgeladenVon &bull; @a.ErstelltAm.ToString("dd.MM.yyyy")</div>
+                                </div>
+                                <a asp-action="AnhangHerunterladen" asp-route-anhangId="@a.Id"
+                                   class="btn-mc-ghost ms-2" style="font-size:0.78rem; padding:0.2rem 0.5rem;">
+                                    <i class="bi bi-download"></i>
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@functions {
+    private static string StatusBadgeClass(VertragStatus s) => s switch {
+        VertragStatus.InVorbereitung => "badge-secondary",
+        VertragStatus.Aktiv         => "badge-success",
+        VertragStatus.Beendet       => "badge-primary",
+        VertragStatus.Gekuendigt    => "badge-danger",
+        VertragStatus.Archiviert    => "badge-secondary",
+        _                           => "badge-secondary"
+    };
+
+    private static string StatusLabel(VertragStatus s) => s switch {
+        VertragStatus.InVorbereitung => "In Vorbereitung",
+        VertragStatus.Aktiv         => "Aktiv",
+        VertragStatus.Beendet       => "Beendet",
+        VertragStatus.Gekuendigt    => "Gekündigt",
+        VertragStatus.Archiviert    => "Archiviert",
+        _                           => s.ToString()
+    };
+}

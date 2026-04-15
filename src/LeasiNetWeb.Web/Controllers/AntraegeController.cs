@@ -64,6 +64,20 @@ public class AntraegeController : BaseController
     {
         var detail = await _antraege.GetAntragDetail(id);
         if (detail is null) return NotFound();
+
+        var vertragId = await _db.Vertraege
+            .Where(v => v.LeasingantragId == id)
+            .Select(v => (int?)v.Id)
+            .FirstOrDefaultAsync();
+        ViewBag.VertragId = vertragId;
+
+        var ablehnungsgruende = await _db.Ablehnungsgruende
+            .Where(ag => ag.IstAktiv)
+            .OrderBy(ag => ag.Bezeichnung)
+            .Select(ag => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem(ag.Bezeichnung, ag.Id.ToString()))
+            .ToListAsync();
+        ViewBag.Ablehnungsgruende = ablehnungsgruende;
+
         return View(detail);
     }
 

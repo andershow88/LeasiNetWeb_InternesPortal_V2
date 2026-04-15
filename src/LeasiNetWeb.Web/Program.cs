@@ -83,6 +83,7 @@ builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<ILeasingantragService, LeasingantragService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<IInternePruefungService, InternePruefungService>();
+builder.Services.AddScoped<IVertragService, VertragService>();
 builder.Services.AddScoped<BereinigungsJob>();
 Checkpoint("5 – application services registered");
 

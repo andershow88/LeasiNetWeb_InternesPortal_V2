@@ -77,6 +77,12 @@
                 </li>
             }
             <li class="mc-nav-item">
+                <a asp-controller="Vertraege" asp-action="Index"
+                   class="mc-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Vertraege" ? "active" : "")">
+                    <i class="bi bi-file-earmark-ruled"></i> Verträge
+                </a>
+            </li>
+            <li class="mc-nav-item">
                 <a asp-controller="Antraege" asp-action="Archiv" class="mc-nav-link">
                     <i class="bi bi-archive"></i> Archiv
                 </a>

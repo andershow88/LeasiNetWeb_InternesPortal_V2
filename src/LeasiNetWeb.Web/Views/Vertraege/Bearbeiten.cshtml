@@ -1,0 +1,133 @@
+@model LeasiNetWeb.Web.ViewModels.VertragBearbeitenViewModel
+@{
+    ViewData["Title"] = $"Vertrag bearbeiten – {Model.VertragNummer}";
+}
+
+<div class="mc-page-header">
+    <div>
+        <div style="font-size:0.82rem; color:var(--mc-text-muted); margin-bottom:0.4rem;">
+            <a asp-action="Index" style="color:var(--mc-primary);">Verträge</a>
+            <span style="margin:0 0.4rem;">/</span>
+            <a asp-action="Details" asp-route-id="@Model.Id" style="color:var(--mc-primary);">@Model.VertragNummer</a>
+            <span style="margin:0 0.4rem;">/</span>
+            <span>Bearbeiten</span>
+        </div>
+        <h1 class="mc-page-title"><i class="bi bi-pencil me-2"></i>Vertrag bearbeiten</h1>
+    </div>
+</div>
+
+<div class="mc-card" style="max-width:760px;">
+    <div class="mc-card-body">
+        <form asp-action="Bearbeiten" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="LeasingantragId" />
+            <input type="hidden" asp-for="VertragNummer" />
+            <input type="hidden" asp-for="AntragNummer" />
+
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small mb-3"></div>
+
+            <div class="row g-3">
+
+                <div class="col-md-6">
+                    <label asp-for="VertragtypId" class="mc-info-label"></label>
+                    <select asp-for="VertragtypId" class="form-select form-select-sm"
+                            asp-items="Model.Vertragstypen">
+                        <option value="">– kein Typ –</option>
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="LaufzeitMonate" class="mc-info-label"></label>
+                    <div class="input-group input-group-sm">
+                        <input asp-for="LaufzeitMonate" class="form-control form-control-sm"
+                               type="number" min="1" max="360"
+                               oninput="berechneVertragsende()" />
+                        <span class="input-group-text">Monate</span>
+                    </div>
+                    <span asp-validation-for="LaufzeitMonate" class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="Vertragsbeginn" class="mc-info-label"></label>
+                    <input asp-for="Vertragsbeginn" class="form-control form-control-sm"
+                           type="date" oninput="berechneVertragsende()" />
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="Vertragsende" class="mc-info-label"></label>
+                    <input asp-for="Vertragsende" id="vertragsendeInput" class="form-control form-control-sm"
+                           type="date" />
+                    <div style="font-size:0.75rem; color:var(--mc-text-muted); margin-top:0.2rem;">
+                        Wird automatisch aus Beginn + Laufzeit berechnet.
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="Finanzierungsbetrag" class="mc-info-label"></label>
+                    <div class="input-group input-group-sm">
+                        <input asp-for="Finanzierungsbetrag" class="form-control form-control-sm"
+                               type="number" step="0.01" min="0.01" />
+                        <span class="input-group-text">€</span>
+                    </div>
+                    <span asp-validation-for="Finanzierungsbetrag" class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="MonatlicheRate" class="mc-info-label"></label>
+                    <div class="input-group input-group-sm">
+                        <input asp-for="MonatlicheRate" class="form-control form-control-sm"
+                               type="number" step="0.01" min="0" />
+                        <span class="input-group-text">€</span>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="Restwert" class="mc-info-label"></label>
+                    <div class="input-group input-group-sm">
+                        <input asp-for="Restwert" class="form-control form-control-sm"
+                               type="number" step="0.01" min="0" />
+                        <span class="input-group-text">€</span>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="Zinssatz" class="mc-info-label"></label>
+                    <div class="input-group input-group-sm">
+                        <input asp-for="Zinssatz" class="form-control form-control-sm"
+                               type="number" step="0.01" min="0" max="100" />
+                        <span class="input-group-text">%</span>
+                    </div>
+                    <span asp-validation-for="Zinssatz" class="text-danger small"></span>
+                </div>
+
+            </div>
+
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn-mc-primary">
+                    <i class="bi bi-check-lg me-1"></i>Speichern
+                </button>
+                <a asp-action="Details" asp-route-id="@Model.Id" class="btn-mc-ghost">Abbrechen</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+    function berechneVertragsende() {
+        const beginInput = document.getElementById('@Html.IdFor(m => m.Vertragsbeginn)');
+        const laufzeitInput = document.getElementById('@Html.IdFor(m => m.LaufzeitMonate)');
+        const endeInput = document.getElementById('vertragsendeInput');
+
+        const beginn = beginInput.value;
+        const monate = parseInt(laufzeitInput.value);
+        if (beginn && monate > 0) {
+            const d = new Date(beginn);
+            d.setMonth(d.getMonth() + monate);
+            endeInput.value = d.toISOString().split('T')[0];
+        }
+    }
+    </script>
+}

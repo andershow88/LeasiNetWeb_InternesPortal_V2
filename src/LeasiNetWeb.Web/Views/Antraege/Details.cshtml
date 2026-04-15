@@ -6,6 +6,7 @@
     bool kannPruefen = User.HasClaim("Rolle", "InternerPruefer") || User.HasClaim("Rolle", "SachbearbeiterMB") || User.HasClaim("Rolle", "Administrator");
     var ablehnungsgruende = ViewBag.Ablehnungsgruende as System.Collections.Generic.List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>
         ?? new System.Collections.Generic.List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>();
+    int? vertragId = ViewBag.VertragId as int?;
 }
 
 <div class="mc-page-header">
@@ -68,6 +69,24 @@
             <a asp-controller="InternePruefung" asp-action="Details" asp-route-antragId="@Model.Id"
                class="btn btn-info">
                 <i class="bi bi-shield-check me-1"></i>Zur Prüfung
+            </a>
+        }
+        @if (Model.Status == AntragStatus.Genehmigt && vertragId == null)
+        {
+            <form asp-controller="Vertraege" asp-action="Erstellen" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="antragId" value="@Model.Id" />
+                <button type="submit" class="btn btn-outline-success"
+                        onclick="return confirm('Vertrag für diesen Antrag anlegen?')">
+                    <i class="bi bi-file-earmark-plus me-1"></i>Vertrag anlegen
+                </button>
+            </form>
+        }
+        @if (vertragId != null)
+        {
+            <a asp-controller="Vertraege" asp-action="Details" asp-route-id="@vertragId"
+               class="btn btn-outline-success">
+                <i class="bi bi-file-earmark-ruled me-1"></i>Zum Vertrag
             </a>
         }
         @if ((Model.Status is AntragStatus.Genehmigt or AntragStatus.Abgelehnt or AntragStatus.Storniert) && !Model.Archiviert)
