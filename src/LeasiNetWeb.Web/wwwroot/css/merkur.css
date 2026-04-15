@@ -53,6 +53,8 @@ a:hover { text-decoration: underline; }
     top: 0; left: 0; bottom: 0;
     z-index: 200;
     transition: transform 0.3s ease;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .mc-sidebar-brand {
