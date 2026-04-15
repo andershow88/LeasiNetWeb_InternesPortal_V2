@@ -1,10 +1,12 @@
 using LeasiNetWeb.Application.DTOs;
 using LeasiNetWeb.Application.Interfaces;
 using LeasiNetWeb.Domain.Enums;
+using LeasiNetWeb.Infrastructure.Data;
 using LeasiNetWeb.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 
 namespace LeasiNetWeb.Web.Controllers;
 
@@ -12,8 +14,13 @@ namespace LeasiNetWeb.Web.Controllers;
 public class AdminController : BaseController
 {
     private readonly IAdminService _admin;
+    private readonly ApplicationDbContext _db;
 
-    public AdminController(IAdminService admin) => _admin = admin;
+    public AdminController(IAdminService admin, ApplicationDbContext db)
+    {
+        _admin = admin;
+        _db = db;
+    }
 
     // ── Dashboard ─────────────────────────────────────────────────────────────
 
@@ -249,5 +256,43 @@ public class AdminController : BaseController
             TempData["Fehler"] = ex.Message;
         }
         return RedirectToAction(nameof(Stammdaten));
+    }
+
+    // ── Demo-Daten laden ──────────────────────────────────────────────────────
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> DemoDatenLaden()
+    {
+        try
+        {
+            // 1. Remove dependent tables that have Restrict or ClientSetNull delete behavior
+            //    (must go before Leasingantraege to avoid FK violations)
+            var vertraege = await _db.Vertraege.ToListAsync();
+            _db.Vertraege.RemoveRange(vertraege);
+
+            var dokAustausche = await _db.DokumentAustausche.ToListAsync();
+            _db.DokumentAustausche.RemoveRange(dokAustausche);
+
+            await _db.SaveChangesAsync();
+
+            // 2. Remove all Leasingantraege — cascade deletes Leasingobjekte,
+            //    InternePruefungen, PruefungsPflichten, Kommentare, Anhaenge,
+            //    Ereignisse and Obligos automatically.
+            var antraege = await _db.Leasingantraege.ToListAsync();
+            _db.Leasingantraege.RemoveRange(antraege);
+            await _db.SaveChangesAsync();
+
+            // 3. Seed 100 demo applications + Verträge
+            await DataSeeder.SeedDemoAntraegeAsync(_db);
+
+            var anzahl = await _db.Leasingantraege.CountAsync();
+            TempData["Erfolg"] = $"Demo-Daten erfolgreich geladen: {anzahl} Anträge erstellt.";
+        }
+        catch (Exception ex)
+        {
+            TempData["Fehler"] = $"Fehler beim Laden der Demo-Daten: {ex.Message}";
+        }
+
+        return RedirectToAction(nameof(Index));
     }
 }

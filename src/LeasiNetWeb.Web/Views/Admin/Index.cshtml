@@ -58,4 +58,45 @@
             </div>
         </div>
     </div>
+    <div class="col-md-4">
+        <div class="mc-card" style="border-color: var(--mc-warning, #e6a817);">
+            <div class="mc-card-header"><h2 class="mc-card-title"><i class="bi bi-database-fill-gear"></i> Demo-Daten</h2></div>
+            <div class="mc-card-body">
+                <p style="color:var(--mc-text-muted); font-size:0.85rem;">
+                    Alle bestehenden Anträge und Verträge löschen und 100 Demo-Einträge mit realistischen Testdaten neu anlegen.
+                </p>
+                <button type="button" class="btn-mc-secondary" style="color:#c8860a;"
+                        data-bs-toggle="modal" data-bs-target="#demoDatenModal">
+                    <i class="bi bi-arrow-repeat"></i> Demo-Daten laden
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Demo-Daten Bestätigungsdialog -->
+<div class="modal fade" id="demoDatenModal" tabindex="-1" aria-labelledby="demoDatenModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content" style="background:var(--mc-surface); color:var(--mc-text);">
+            <div class="modal-header" style="border-bottom:1px solid var(--mc-border);">
+                <h5 class="modal-title" id="demoDatenModalLabel">
+                    <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>Demo-Daten laden
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Achtung:</strong> Dieser Vorgang löscht alle vorhandenen Leasinganträge und Verträge unwiderruflich und ersetzt sie durch 100 Demo-Datensätze.</p>
+                <p style="color:var(--mc-text-muted); font-size:0.85rem;">Benutzer, Leasinggesellschaften und Stammdaten bleiben erhalten.</p>
+            </div>
+            <div class="modal-footer" style="border-top:1px solid var(--mc-border);">
+                <button type="button" class="btn-mc-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                <form asp-action="DemoDatenLaden" method="post" style="display:inline;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn-mc-primary" style="background:#c8860a; border-color:#c8860a;">
+                        <i class="bi bi-arrow-repeat"></i> Ja, Demo-Daten laden
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>

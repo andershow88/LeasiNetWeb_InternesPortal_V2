@@ -99,7 +99,7 @@ public static class DataSeeder
     }
 
     // ── Demo-Anträge (100 Stück) ──────────────────────────────────────────────
-    private static async Task SeedDemoAntraegeAsync(ApplicationDbContext db)
+    public static async Task SeedDemoAntraegeAsync(ApplicationDbContext db)
     {
         // Load references
         var benutzer      = await db.Benutzer.ToListAsync();
