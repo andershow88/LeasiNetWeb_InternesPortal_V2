@@ -73,49 +73,67 @@
             </button>
         </form>
 
-        <!-- Demo-Zugänge -->
+        <!-- Demo-Zugänge (versteckt, Zauberwort MERKUR zum Aufdecken) -->
         <div class="mc-login-demo-box mt-3">
-            <div class="mc-login-demo-box-header">
-                <i class="bi bi-person-badge"></i> Demo-Zugänge – Klick zum Übernehmen
+            <div class="mc-login-demo-box-header" style="justify-content:space-between;">
+                <span><i class="bi bi-shield-lock"></i> Demo-Zugänge</span>
+                <span style="font-size:.68rem; opacity:.7; font-weight:400; text-transform:none; letter-spacing:0;">
+                    Zauberwort eingeben
+                </span>
             </div>
-            <div class="mc-login-demo-grid">
-                <div class="mc-login-demo-entry" onclick="demoLogin('admin','Admin1234!')" style="cursor:pointer;" title="Klicken zum Anmelden">
-                    <div class="mc-login-demo-role">Administrator</div>
-                    <div class="mc-login-demo-creds">
-                        <span>admin</span>
-                        <span>Admin1234!</span>
+            <!-- Zauberwort-Eingabe -->
+            <div style="padding:.6rem 1rem; border-bottom:1px solid var(--mc-border);">
+                <input id="zauberwortInput" type="password" placeholder="••••••"
+                       autocomplete="off"
+                       oninput="pruefZauberwort(this.value)"
+                       style="width:100%; border:1px solid var(--mc-border); border-radius:8px;
+                              padding:.4rem .75rem; font-size:.85rem; background:var(--mc-bg);
+                              color:var(--mc-text); outline:none; font-family:monospace;
+                              letter-spacing:.15em; transition:border-color .2s;"
+                       onfocus="this.style.borderColor='var(--mc-gold)'"
+                       onblur="this.style.borderColor='var(--mc-border)'" />
+            </div>
+            <!-- Grid (zunächst versteckt) -->
+            <div id="demoGrid" style="display:none; overflow:hidden;">
+                <div class="mc-login-demo-grid">
+                    <div class="mc-login-demo-entry" onclick="demoLogin('admin','Admin1234!')" style="cursor:pointer;" title="Klicken zum Anmelden">
+                        <div class="mc-login-demo-role">Administrator</div>
+                        <div class="mc-login-demo-creds">
+                            <span>admin</span>
+                            <span>Admin1234!</span>
+                        </div>
                     </div>
-                </div>
-                <div class="mc-login-demo-entry" onclick="demoLogin('sachbearbeiter.mb','Demo1234!')" style="cursor:pointer;" title="Klicken zum Anmelden">
-                    <div class="mc-login-demo-role">Sachbearbeiter MB</div>
-                    <div class="mc-login-demo-creds">
-                        <span>sachbearbeiter.mb</span>
-                        <span>Demo1234!</span>
+                    <div class="mc-login-demo-entry" onclick="demoLogin('sachbearbeiter.mb','Demo1234!')" style="cursor:pointer;" title="Klicken zum Anmelden">
+                        <div class="mc-login-demo-role">Sachbearbeiter MB</div>
+                        <div class="mc-login-demo-creds">
+                            <span>sachbearbeiter.mb</span>
+                            <span>Demo1234!</span>
+                        </div>
                     </div>
-                </div>
-                <div class="mc-login-demo-entry" onclick="demoLogin('genehmiger.mb','Demo1234!')" style="cursor:pointer;" title="Klicken zum Anmelden">
-                    <div class="mc-login-demo-role">Genehmiger</div>
-                    <div class="mc-login-demo-creds">
-                        <span>genehmiger.mb</span>
-                        <span>Demo1234!</span>
+                    <div class="mc-login-demo-entry" onclick="demoLogin('genehmiger.mb','Demo1234!')" style="cursor:pointer;" title="Klicken zum Anmelden">
+                        <div class="mc-login-demo-role">Genehmiger</div>
+                        <div class="mc-login-demo-creds">
+                            <span>genehmiger.mb</span>
+                            <span>Demo1234!</span>
+                        </div>
                     </div>
-                </div>
-                <div class="mc-login-demo-entry" onclick="demoLogin('sachbearbeiter.lg','Demo1234!')" style="cursor:pointer;" title="Klicken zum Anmelden">
-                    <div class="mc-login-demo-role">Sachbearbeiter LG</div>
-                    <div class="mc-login-demo-creds">
-                        <span>sachbearbeiter.lg</span>
-                        <span>Demo1234!</span>
+                    <div class="mc-login-demo-entry" onclick="demoLogin('sachbearbeiter.lg','Demo1234!')" style="cursor:pointer;" title="Klicken zum Anmelden">
+                        <div class="mc-login-demo-role">Sachbearbeiter LG</div>
+                        <div class="mc-login-demo-creds">
+                            <span>sachbearbeiter.lg</span>
+                            <span>Demo1234!</span>
+                        </div>
                     </div>
-                </div>
-                <div class="mc-login-demo-entry" onclick="demoLogin('pruefer.mb','Demo1234!')" style="cursor:pointer;" title="Klicken zum Anmelden">
-                    <div class="mc-login-demo-role">Interner Prüfer</div>
-                    <div class="mc-login-demo-creds">
-                        <span>pruefer.mb</span>
-                        <span>Demo1234!</span>
+                    <div class="mc-login-demo-entry" onclick="demoLogin('pruefer.mb','Demo1234!')" style="cursor:pointer;" title="Klicken zum Anmelden">
+                        <div class="mc-login-demo-role">Interner Prüfer</div>
+                        <div class="mc-login-demo-creds">
+                            <span>pruefer.mb</span>
+                            <span>Demo1234!</span>
+                        </div>
                     </div>
-                </div>
-                <div class="mc-login-demo-entry" style="display:flex; align-items:center; justify-content:center; color:var(--mc-text-muted); font-size:0.72rem; text-align:center; padding:.7rem 1rem;">
-                    <div><i class="bi bi-cursor" style="font-size:1.1rem; display:block; margin-bottom:.25rem; opacity:.4;"></i>Eintrag anklicken<br>zum Übernehmen</div>
+                    <div class="mc-login-demo-entry" style="display:flex; align-items:center; justify-content:center; color:var(--mc-text-muted); font-size:0.72rem; text-align:center; padding:.7rem 1rem;">
+                        <div><i class="bi bi-cursor" style="font-size:1.1rem; display:block; margin-bottom:.25rem; opacity:.4;"></i>Eintrag anklicken<br>zum Übernehmen</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -162,6 +180,19 @@
     function updateLoginIcon(theme) {
         const icon = document.getElementById('loginThemeIcon');
         if (icon) icon.className = theme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
+    }
+
+    function pruefZauberwort(val) {
+        const grid = document.getElementById('demoGrid');
+        const input = document.getElementById('zauberwortInput');
+        if (val.toUpperCase() === 'MERKUR') {
+            grid.style.display = 'block';
+            input.style.borderColor = 'var(--mc-gold)';
+            input.blur();
+        } else {
+            grid.style.display = 'none';
+            input.style.borderColor = 'var(--mc-border)';
+        }
     }
 
     function demoLogin(user, pass) {
