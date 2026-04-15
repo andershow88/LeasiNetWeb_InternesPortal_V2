@@ -1,5 +1,6 @@
 using LeasiNetWeb.Domain.Entities;
 using LeasiNetWeb.Domain.Enums;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -13,7 +14,7 @@ public static class DataSeeder
         // (no migrations needed for MVP — schema is created fresh on first deploy)
         await db.Database.EnsureCreatedAsync();
 
-        if (db.Benutzer.Any()) return;
+        if (await db.Benutzer.AnyAsync()) return;
 
         // ── Ablehnungsgründe ──────────────────────────────────────────────────
         var ablehnungsgruende = new List<Ablehnungsgrund>
