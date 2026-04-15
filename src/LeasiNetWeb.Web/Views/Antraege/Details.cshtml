@@ -3,6 +3,8 @@
 @{
     ViewData["Title"] = $"Antrag {Model.AntragNummer}";
     bool kannGenehmigen = User.HasClaim("Rolle", "Genehmiger") || User.HasClaim("Rolle", "Administrator");
+    var ablehnungsgruende = ViewBag.Ablehnungsgruende as System.Collections.Generic.List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>
+        ?? new System.Collections.Generic.List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>();
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -230,7 +232,7 @@
                         <label class="form-label fw-semibold">Ablehnungsgrund</label>
                         <select name="ablehnungsgrundId" class="form-select" required>
                             <option value="">Bitte wählen…</option>
-                            @foreach (var ag in (ViewBag.Ablehnungsgruende as IEnumerable<SelectListItem>) ?? Enumerable.Empty<SelectListItem>())
+                            @foreach (var ag in ablehnungsgruende)
                             {
                                 <option value="@ag.Value">@ag.Text</option>
                             }
