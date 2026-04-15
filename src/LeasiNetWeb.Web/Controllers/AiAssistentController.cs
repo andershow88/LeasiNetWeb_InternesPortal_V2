@@ -30,11 +30,11 @@ public class AiAssistentController : BaseController
     [HttpPost]
     public async Task<IActionResult> Fragen([FromBody] ChatAnfrageDto anfrage)
     {
-        var apiKey = Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY")
-            ?? _config["AnthropicApiKey"];
+        var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY")
+            ?? _config["OpenAiApiKey"];
 
         if (string.IsNullOrWhiteSpace(apiKey))
-            return Json(new { error = "Kein ANTHROPIC_API_KEY konfiguriert. Bitte in Railway-Umgebungsvariablen eintragen." });
+            return Json(new { error = "Kein OPENAI_API_KEY konfiguriert. Bitte in Railway-Umgebungsvariablen eintragen." });
 
         if (string.IsNullOrWhiteSpace(anfrage?.Frage))
             return Json(new { error = "Keine Frage angegeben." });
@@ -109,17 +109,18 @@ public class AiAssistentController : BaseController
                 Wenn du keine Daten zu einer spezifischen Anfrage hast, sage es klar.
                 """;
 
-            // ── Anthropic API aufrufen ───────────────────────────────────────
-            var client = _httpClientFactory.CreateClient("Anthropic");
+            // ── OpenAI Chat Completions API aufrufen ─────────────────────────
+            // System-Prompt als erstes Element in messages einfügen
+            messages.Insert(0, new { role = "system", content = systemPrompt });
+
+            var client = _httpClientFactory.CreateClient();
             client.DefaultRequestHeaders.Clear();
-            client.DefaultRequestHeaders.Add("x-api-key", apiKey);
-            client.DefaultRequestHeaders.Add("anthropic-version", "2023-06-01");
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
 
             var requestBody = new
             {
-                model = "claude-haiku-4-5-20251001",
+                model = "gpt-4o-mini",
                 max_tokens = 1500,
-                system = systemPrompt,
                 messages
             };
 
@@ -127,20 +128,20 @@ public class AiAssistentController : BaseController
             var json = JsonSerializer.Serialize(requestBody, jsonOptions);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var response = await client.PostAsync("https://api.anthropic.com/v1/messages", content);
+            var response = await client.PostAsync("https://api.openai.com/v1/chat/completions", content);
 
             if (!response.IsSuccessStatusCode)
             {
                 var body = await response.Content.ReadAsStringAsync();
-                Console.Error.WriteLine($"[AI] Anthropic error {response.StatusCode}: {body}");
+                Console.Error.WriteLine($"[AI] OpenAI error {response.StatusCode}: {body}");
                 return Json(new { error = $"API-Fehler ({response.StatusCode}). Bitte API-Key prüfen." });
             }
 
             using var stream = await response.Content.ReadAsStreamAsync();
-            var result = await JsonSerializer.DeserializeAsync<AnthropicResponse>(stream,
+            var result = await JsonSerializer.DeserializeAsync<OpenAiResponse>(stream,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
-            var antwort = result?.Content?.FirstOrDefault()?.Text ?? "Keine Antwort erhalten.";
+            var antwort = result?.Choices?.FirstOrDefault()?.Message?.Content ?? "Keine Antwort erhalten.";
             return Json(new { antwort });
         }
         catch (Exception ex)
@@ -258,11 +259,15 @@ public class AiAssistentController : BaseController
 public record ChatAnfrageDto(string Frage, List<ChatNachrichtDto>? Verlauf);
 public record ChatNachrichtDto(string Rolle, string Text);
 
-internal class AnthropicResponse
+internal class OpenAiResponse
 {
-    public List<AnthropicContentBlock>? Content { get; set; }
+    public List<OpenAiChoice>? Choices { get; set; }
 }
-internal class AnthropicContentBlock
+internal class OpenAiChoice
 {
-    public string? Text { get; set; }
+    public OpenAiMessage? Message { get; set; }
+}
+internal class OpenAiMessage
+{
+    public string? Content { get; set; }
 }
