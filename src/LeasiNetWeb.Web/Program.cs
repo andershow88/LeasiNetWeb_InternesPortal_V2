@@ -132,6 +132,16 @@ try
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     Checkpoint("9 – seeding database");
+
+    // Ensure DataProtectionKeys table exists (not created by EnsureCreated on existing DBs)
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE TABLE IF NOT EXISTS "DataProtectionKeys" (
+            "Id"           SERIAL PRIMARY KEY,
+            "FriendlyName" TEXT NULL,
+            "Xml"          TEXT NULL
+        );
+        """);
+
     await DataSeeder.SeedAsync(db);
     Checkpoint("10 – seed complete");
 }
