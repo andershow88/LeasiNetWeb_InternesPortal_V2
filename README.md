@@ -18,6 +18,7 @@
 - [Demo-Zugang](#demo-zugang)
 - [Dokumentation](#dokumentation)
 - [Lizenz](#lizenz)
+- [Changelog](#changelog)
 
 ---
 
@@ -31,11 +32,13 @@
 |---|---|
 | **Antragsverwaltung** | Leasinganträge anlegen, einreichen, prüfen, genehmigen oder ablehnen – mit vollständigem Status-Workflow |
 | **Vertragsverwaltung** | Aus genehmigten Anträgen Verträge erzeugen, bearbeiten, aktivieren, beenden oder kündigen |
-| **Interne Prüfung** | Compliance-Checklisten führen und Prüfungspflichten abhaken |
+| **Interne Prüfung** | Compliance-Checklisten führen, Prüfungspflichten abhaken und mehrstufige Prüfschritte sequentiell abarbeiten |
 | **Obligo-Management** | Obligo-Beträge pro Antrag und Leasinggesellschaft tracken |
 | **Nachrichtensystem** | Internes Messaging zwischen Benutzern mit Antragsbezug |
 | **Auswertung & Export** | Kennzahlen-Dashboard und CSV-Export von Anträgen und Verträgen |
 | **Administration** | Benutzer-, Leasinggesellschafts- und Stammdatenverwaltung |
+| **KI-Assistent** | Kontextbewusster Chat-Assistent in der Topbar – Fragen zu Anträgen, Workflows und Systemdaten direkt stellen |
+| **Dark Mode** | Zwischen hellem und dunklem Theme wechseln – Einstellung wird im Browser gespeichert |
 
 ---
 
@@ -56,13 +59,13 @@
 ### Antragsstatus-Workflow
 
 ```
-Entwurf → Eingereicht → InPruefung → BeiMitarbeiter → Genehmigt
-                                   ↘ BeiLeasinggesellschaft     ↘ Vertrag erstellen
-                                   ↘ ZweiteVoteErforderlich
-                                   ↘ InterneKontrolleErforderlich
-                                   ↘ Abgelehnt
-                                   ↘ Storniert
-                                      → Archiviert
+Entwurf → Eingereicht → InPruefung → BeiMitarbeiter ──────────────────────────────→ Genehmigt
+                                    ↘ BeiLeasinggesellschaft              ↘ Vertrag erstellen
+                                    ↘ ZweiteVoteErforderlich
+                                    ↘ InterneKontrolleErforderlich → (Prüfschritte) → BeiMitarbeiter
+                                    ↘ Abgelehnt
+                                    ↘ Storniert
+                                       → Archiviert
 ```
 
 ### Vertragsstatus-Workflow
@@ -75,8 +78,19 @@ InVorbereitung → Aktiv → Beendet
 
 ### Hintergrund-Jobs (Hangfire)
 
-- **Anträge archivieren** – monatlich, archiviert genehmigte/abgelehnte Anträge nach 24 Monaten
-- **Synchronisierungsanfragen bereinigen** – täglich um 03:00 Uhr, löscht verarbeitete Einträge älter als 30 Tage
+- **Anträge archivieren** – monatlich, archiviert genehmigte/abgelehnte/stornierte Anträge nach 24 Monaten
+- **Synchronisierungsanfragen bereinigen** – täglich, löscht verarbeitete Einträge älter als 30 Tage
+- **Verwaiste Dateien bereinigen** – täglich, entfernt Upload-Dateien ohne zugehörigen Anhang-Eintrag in der Datenbank
+
+### KI-Assistent
+
+Der integrierte KI-Assistent ist über die **Topbar-Suchleiste** erreichbar. Eingabe einer Frage und Bestätigung mit **Enter** öffnet ein Modal direkt unterhalb der Topbar.
+
+- **Modell:** OpenAI `gpt-4o-mini`
+- **Kontextbewusstsein:** Lädt bei jeder Anfrage automatisch relevante Echtzeit-Daten aus der Datenbank (Antrag-Statistiken, aktuelle Anträge, Benutzer, Leasinggesellschaften)
+- **Folgefragen:** Im Modal können weitere Fragen gestellt werden; der Gesprächsverlauf bleibt erhalten
+- **Neue Konversation:** Jede Topbar-Anfrage startet eine frische Konversation (kein alter Kontext)
+- **Voraussetzung:** Umgebungsvariable `OPENAI_API_KEY` oder Eintrag `OpenAiApiKey` in `appsettings.json`
 
 ---
 
@@ -92,7 +106,8 @@ InVorbereitung → Aktiv → Beendet
 | **Authentifizierung** | Cookie-basiert mit Claims-Autorisierung |
 | **Containerisierung** | Docker (Multi-Stage Build) |
 | **Hosting** | Railway (oder jede Docker-fähige Plattform) |
-| **Frontend** | Bootstrap (via wwwroot/lib), jQuery |
+| **Frontend** | Bootstrap (via wwwroot/lib), jQuery, eigenes MerkurConnect Design-System (`merkur.css`) |
+| **KI-Integration** | OpenAI API (`gpt-4o-mini`) via `IHttpClientFactory` |
 
 ---
 
@@ -131,6 +146,10 @@ Die Lösung folgt der **Clean Architecture** mit vier Schichten:
 | `Ereignis` | Audit-Event mit Benachrichtigungs-Tracking |
 | `Kommentar` | Kommentar zu einem Antrag (intern/extern) |
 | `Anhang` | Dateianhang (Antragsdokument, Vertragsdokument, Prüfungsdokument) |
+| `PruefungsSchritt` | Einzelner sequentieller Prüfschritt innerhalb einer internen Kontrolle (verschiedene Prüfer möglich) |
+| `DokumentAustausch` | Dokumentenaustausch-Eintrag (eingehend/ausgehend) für Anträge und Verträge |
+| `LgRegistrierung` | Onboarding-Registrierung einer Leasinggesellschaft (Kontaktperson, Status, Abschluss) |
+| `SynchronisierungsAnfrage` | Verarbeitungsprotokoll für externe Synchronisierungsanfragen |
 | `Ablehnungsgrund` | Stammdatum für Ablehnungsgründe |
 | `Geraetetyp` | Stammdatum für Gerätekategorien |
 | `Vertragstyp` | Stammdatum für Vertragsarten (KFZ, IT, Maschinen, Immobilien) |
@@ -163,9 +182,12 @@ LeasiNetWeb_InternesPortal_V2/
     │   └── Jobs/                      # Hangfire Hintergrund-Jobs
     └── LeasiNetWeb.Web/               # Web-Präsentation
         ├── Controllers/               # MVC Controller
+        │   ├── AiAssistentController.cs   # KI-Assistent (OpenAI-Integration)
+        │   └── …                      # Account, Admin, Antraege, Vertraege, …
         ├── Views/                     # Razor Views
         ├── ViewModels/                # View-spezifische Modelle
         ├── wwwroot/                   # Statische Dateien (CSS, JS, Bilder)
+        │   └── css/merkur.css         # Eigenes MerkurConnect Design-System
         └── Program.cs                 # Anwendungs-Einstiegspunkt
 ```
 
@@ -223,6 +245,9 @@ Die Datenbankverbindung wird in folgender Priorität ausgewählt:
 | `DATABASE_URL` | PostgreSQL-Verbindungsstring (Railway-Format) | `postgres://user:pass@host:5432/dbname` |
 | `PORT` | HTTP-Port (Railway injiziert diesen automatisch) | `8080` |
 | `DOTNET_EnableDiagnostics` | .NET Diagnostics deaktivieren (Container) | `0` |
+| `OPENAI_API_KEY` | API-Schlüssel für den KI-Assistenten (OpenAI) | `sk-…` |
+
+> **Hinweis KI-Assistent:** Alternativ kann `OpenAiApiKey` in `appsettings.json` gesetzt werden. Ohne gültigen Key gibt der KI-Assistent eine entsprechende Fehlermeldung aus, alle anderen Funktionen bleiben unberührt.
 
 ---
 
@@ -275,3 +300,34 @@ Zusätzlich werden 100 Demo-Leasinganträge mit zugehörigen Verträgen und Leas
 ## Lizenz
 
 Dieses Projekt ist proprietäre Software. Alle Rechte vorbehalten.
+
+---
+
+## Changelog
+
+### v2.x – April 2026
+
+#### Neu: KI-Assistent in der Topbar
+- Neue Suchleiste in der Topbar ersetzt den Breadcrumb-Bereich
+- Eingabe einer Frage + **Enter** öffnet ein Chat-Modal unterhalb der Topbar
+- Kontextbewusste Antworten dank Echtzeit-Datenbankabfragen (Statistiken, Anträge, Benutzer, Leasinggesellschaften)
+- Folgefragen im Modal möglich; jede neue Topbar-Anfrage startet eine frische Konversation
+- Backend: `AiAssistentController` → OpenAI `gpt-4o-mini` via `IHttpClientFactory`
+- Konfiguration: Umgebungsvariable `OPENAI_API_KEY` oder `OpenAiApiKey` in `appsettings.json`
+
+#### Neu: Dark Mode
+- Umschalter (☀/🌙) in der Topbar (rechts neben dem Benutzernamen)
+- Wechsel zwischen hellem und dunklem Theme; Einstellung wird in `localStorage` gespeichert
+
+#### Topbar-Redesign
+- KI-Suchleiste nimmt die gesamte Topbar-Mitte ein (Breadcrumb entfernt)
+- Dark-Mode-Icon und Benutzername wieder korrekt rechtsbündig (`flex-shrink:0`)
+- Suchleiste verbreitert, größere Schrift und mehr Padding für bessere Bedienung
+
+#### Neue Domänen-Entitäten
+- `PruefungsSchritt` – sequentieller Prüfschritt innerhalb einer internen Kontrolle (mehrere Prüfer möglich)
+- `DokumentAustausch` – Dokumentenaustausch-Protokoll (eingehend/ausgehend) für Anträge und Verträge
+- `LgRegistrierung` – Onboarding-Registrierung einer Leasinggesellschaft
+
+#### Erweiterter Hintergrund-Job
+- Dritter Bereinigungsjob: **Verwaiste Dateien bereinigen** – entfernt täglich Upload-Dateien ohne Datenbankeintrag
