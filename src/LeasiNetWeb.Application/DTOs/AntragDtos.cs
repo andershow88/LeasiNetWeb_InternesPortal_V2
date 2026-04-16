@@ -54,6 +54,7 @@ public record AntragErstellenDto(
 );
 
 public record AntragAktualisierenDto(
+    AntragTyp? AntragTyp,
     int? LeasinggesellschaftId,
     int? SachbearbeiterMBId,
     int? SachbearbeiterLGId,

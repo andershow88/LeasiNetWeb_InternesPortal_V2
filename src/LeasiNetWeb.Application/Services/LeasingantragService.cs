@@ -121,6 +121,7 @@ public class LeasingantragService : ILeasingantragService
         var antrag = await _db.Leasingantraege.FindAsync(id)
             ?? throw new KeyNotFoundException($"Antrag {id} nicht gefunden.");
 
+        if (dto.AntragTyp.HasValue) antrag.AntragTyp = dto.AntragTyp.Value;
         if (dto.LeasinggesellschaftId.HasValue) antrag.LeasinggesellschaftId = dto.LeasinggesellschaftId;
         if (dto.SachbearbeiterMBId.HasValue) antrag.SachbearbeiterMBId = dto.SachbearbeiterMBId;
         if (dto.SachbearbeiterLGId.HasValue) antrag.SachbearbeiterLGId = dto.SachbearbeiterLGId;

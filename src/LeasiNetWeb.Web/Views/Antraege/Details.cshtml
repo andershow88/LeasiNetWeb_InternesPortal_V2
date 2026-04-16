@@ -134,6 +134,80 @@
     </div>
 }
 
+@if (Model.Status == AntragStatus.KiEingereicht)
+{
+    var leasinggesellschaften = ViewBag.Leasinggesellschaften as Microsoft.AspNetCore.Mvc.Rendering.SelectList
+        ?? new Microsoft.AspNetCore.Mvc.Rendering.SelectList(Enumerable.Empty<object>());
+    <div class="mc-card" style="margin-bottom:1.25rem; border:1.5px solid rgba(201,168,76,.3);">
+        <div class="mc-card-header" style="background:rgba(201,168,76,.06);">
+            <h2 class="mc-card-title" style="color:var(--mc-gold); font-size:.95rem;">
+                <i class="bi bi-pencil-square me-1"></i>Felder prüfen &amp; ergänzen
+            </h2>
+        </div>
+        <div class="mc-card-body">
+            @if (TempData["Erfolg"] != null)
+            {
+                <div class="alert alert-success py-2 small mb-3">@TempData["Erfolg"]</div>
+            }
+            <form asp-action="Aktualisieren" asp-route-id="@Model.Id" method="post">
+                @Html.AntiForgeryToken()
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold small">Antragstyp</label>
+                        <select name="antragTyp" class="form-select form-select-sm">
+                            @foreach (var t in Enum.GetValues<LeasiNetWeb.Domain.Enums.AntragTyp>())
+                            {
+                                if (Model.AntragTyp == t)
+                                {
+                                    <option value="@((int)t)" selected>@t</option>
+                                }
+                                else
+                                {
+                                    <option value="@((int)t)">@t</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold small">Obligo (€)</label>
+                        <input type="number" name="obligo" step="0.01" min="0"
+                               class="form-control form-control-sm"
+                               value="@Model.Obligo.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold small">Abrechnungsart</label>
+                        <input type="text" name="abrechnungsart" class="form-control form-control-sm"
+                               value="@(Model.Abrechnungsart ?? "")" placeholder="z.B. Kilometer, Vollkosten…" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold small">Leasinggesellschaft</label>
+                        <select name="leasinggesellschaftId" class="form-select form-select-sm">
+                            <option value="">– Bitte wählen –</option>
+                            @foreach (Microsoft.AspNetCore.Mvc.Rendering.SelectListItem item in leasinggesellschaften)
+                            {
+                                if (Model.LeasinggesellschaftId?.ToString() == item.Value)
+                                {
+                                    <option value="@item.Value" selected>@item.Text</option>
+                                }
+                                else
+                                {
+                                    <option value="@item.Value">@item.Text</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <button type="submit" class="btn btn-sm btn-outline-warning w-100"
+                                style="border-color:var(--mc-gold); color:var(--mc-gold);">
+                            <i class="bi bi-floppy me-1"></i>Speichern
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+
 <div class="row g-4">
     <!-- Stammdaten -->
     <div class="col-md-6">

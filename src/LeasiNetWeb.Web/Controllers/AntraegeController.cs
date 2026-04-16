@@ -105,7 +105,26 @@ public class AntraegeController : BaseController
             .ToListAsync();
         ViewBag.Ablehnungsgruende = ablehnungsgruende;
 
+        if (detail.Status == AntragStatus.KiEingereicht)
+            await FuelleDropdowns();
+
         return View(detail);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Aktualisieren(int id, int? antragTyp, int? leasinggesellschaftId,
+        int? sachbearbeiterMBId, decimal? obligo, string? abrechnungsart)
+    {
+        var typ = (antragTyp.HasValue && Enum.IsDefined(typeof(AntragTyp), antragTyp.Value))
+            ? (AntragTyp?)antragTyp.Value : null;
+
+        await _antraege.AktualisiereAntrag(id,
+            new AntragAktualisierenDto(typ, leasinggesellschaftId, sachbearbeiterMBId, null, obligo, abrechnungsart),
+            AktuellerBenutzerId);
+
+        TempData["Erfolg"] = "Antrag erfolgreich aktualisiert.";
+        return RedirectToAction(nameof(Details), new { id });
     }
 
     // ── Neu anlegen ────────────────────────────────────────────────────────────
@@ -332,11 +351,14 @@ public class AntraegeController : BaseController
     public async Task<IActionResult> KiAntragErstellen(int? antragTyp, decimal? obligo,
         string? abrechnungsart, int? leasinggesellschaftId, string? tempToken, string? dateiname)
     {
-        if (antragTyp == null || !Enum.IsDefined(typeof(AntragTyp), antragTyp.Value))
-            return Json(new { error = "Ungültiger Antragstyp." });
+        // KI-Anträge dürfen mit unvollständigen Daten eingereicht werden —
+        // der Leasingmitarbeiter ergänzt fehlende Felder in der Detailansicht.
+        var typ = (antragTyp.HasValue && Enum.IsDefined(typeof(AntragTyp), antragTyp.Value))
+            ? (AntragTyp)antragTyp.Value
+            : AntragTyp.Neugeschaeft;
 
         var id = await _antraege.ErstelleKiAntrag(
-            new AntragErstellenDto((AntragTyp)antragTyp.Value, leasinggesellschaftId,
+            new AntragErstellenDto(typ, leasinggesellschaftId,
                 obligo ?? 0, abrechnungsart, KiErstellt: true),
             AktuellerBenutzerId);
 
