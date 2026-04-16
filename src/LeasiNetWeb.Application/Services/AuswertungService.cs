@@ -157,7 +157,7 @@ public class AuswertungService : IAuswertungService
                 a.EingereichtVon.Anzeigename,
                 a.Leasinggesellschaft != null ? a.Leasinggesellschaft.Name : null,
                 a.SachbearbeiterMB != null ? a.SachbearbeiterMB.Anzeigename : null,
-                a.Obligo, a.ErstelltAm, a.GeaendertAm, a.ZweiteVoteErforderlich))
+                a.Obligo, a.ErstelltAm, a.GeaendertAm, a.ZweiteVoteErforderlich, a.KiErstellt))
             .ToListAsync();
     }
 

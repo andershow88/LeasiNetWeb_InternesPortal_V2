@@ -20,4 +20,9 @@ public class AntragErstellenViewModel
     [Display(Name = "Abrechnungsart")]
     [StringLength(100)]
     public string? Abrechnungsart { get; set; }
+
+    // KI-Erstellung
+    public bool KiErstellt { get; set; }
+    public string? PdfTempToken { get; set; }
+    public string? PdfDateiname { get; set; }
 }

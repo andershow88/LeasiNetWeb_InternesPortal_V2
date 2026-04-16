@@ -5,6 +5,10 @@ using LeasiNetWeb.Web.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System.Text;
+using System.Text.Json;
+using System.Text.RegularExpressions;
+using UglyToad.PdfPig;
 
 namespace LeasiNetWeb.Web.Controllers;
 
@@ -14,14 +18,19 @@ public class AntraegeController : BaseController
     private readonly IKommentarService _kommentare;
     private readonly IAnhangService _anhaenge;
     private readonly IApplicationDbContext _db;
+    private readonly IConfiguration _config;
+    private readonly IHttpClientFactory _httpClientFactory;
 
     public AntraegeController(ILeasingantragService antraege, IKommentarService kommentare,
-        IAnhangService anhaenge, IApplicationDbContext db)
+        IAnhangService anhaenge, IApplicationDbContext db,
+        IConfiguration config, IHttpClientFactory httpClientFactory)
     {
         _antraege = antraege;
         _kommentare = kommentare;
         _anhaenge = anhaenge;
         _db = db;
+        _config = config;
+        _httpClientFactory = httpClientFactory;
     }
 
     // ── Übersicht ──────────────────────────────────────────────────────────────
@@ -71,7 +80,7 @@ public class AntraegeController : BaseController
             .Select(a => new AntragListeDto(a.Id, a.AntragNummer, a.AntragTyp, a.Status,
                 a.EingereichtVon.Anzeigename, a.Leasinggesellschaft != null ? a.Leasinggesellschaft.Name : null,
                 a.SachbearbeiterMB != null ? a.SachbearbeiterMB.Anzeigename : null,
-                a.Obligo, a.ErstelltAm, a.GeaendertAm, a.ZweiteVoteErforderlich))
+                a.Obligo, a.ErstelltAm, a.GeaendertAm, a.ZweiteVoteErforderlich, a.KiErstellt))
             .ToListAsync();
         return View("Index", alle);
     }
@@ -101,10 +110,25 @@ public class AntraegeController : BaseController
 
     // ── Neu anlegen ────────────────────────────────────────────────────────────
 
-    public async Task<IActionResult> Neu()
+    public async Task<IActionResult> Neu(bool ki = false, int? at = null, decimal? ob = null,
+        string? ab = null, int? lgId = null, string? token = null, string? fn = null)
     {
         await FuelleDropdowns();
-        return View(new AntragErstellenViewModel());
+        var vm = new AntragErstellenViewModel
+        {
+            KiErstellt    = ki,
+            PdfTempToken  = token,
+            PdfDateiname  = fn
+        };
+        if (ki)
+        {
+            if (at.HasValue && Enum.IsDefined(typeof(AntragTyp), at.Value))
+                vm.AntragTyp = (AntragTyp)at.Value;
+            if (ob.HasValue && ob.Value > 0) vm.Obligo = ob.Value;
+            if (!string.IsNullOrWhiteSpace(ab))  vm.Abrechnungsart = ab;
+            if (lgId.HasValue) vm.LeasinggesellschaftId = lgId;
+        }
+        return View(vm);
     }
 
     [HttpPost]
@@ -118,10 +142,187 @@ public class AntraegeController : BaseController
         }
 
         var id = await _antraege.ErstelleAntrag(
-            new AntragErstellenDto(model.AntragTyp, model.LeasinggesellschaftId, model.Obligo, model.Abrechnungsart),
+            new AntragErstellenDto(model.AntragTyp, model.LeasinggesellschaftId,
+                model.Obligo, model.Abrechnungsart, model.KiErstellt),
             AktuellerBenutzerId);
 
+        // KI-Antrag: hochgeladenes PDF aus Temp-Verzeichnis als Anhang speichern
+        if (model.KiErstellt && !string.IsNullOrWhiteSpace(model.PdfTempToken))
+        {
+            var tempPfad = Path.Combine(Path.GetTempPath(), "leasinetweb_ki",
+                $"{model.PdfTempToken}.pdf");
+            if (System.IO.File.Exists(tempPfad))
+            {
+                try
+                {
+                    await using var fs = System.IO.File.OpenRead(tempPfad);
+                    var dateiname = string.IsNullOrWhiteSpace(model.PdfDateiname)
+                        ? "Antragsdokument_KI.pdf" : model.PdfDateiname;
+                    await _anhaenge.HochladenAsync(fs, dateiname, "application/pdf",
+                        new FileInfo(tempPfad).Length, AnhangTyp.Antragsdokument,
+                        AktuellerBenutzerId, antragId: id);
+                }
+                catch { /* Anhang-Fehler darf den Antrag nicht blockieren */ }
+                finally
+                {
+                    try { System.IO.File.Delete(tempPfad); } catch { }
+                }
+            }
+        }
+
         return RedirectToAction(nameof(Details), new { id });
+    }
+
+    // ── KI-PDF-Analyse ────────────────────────────────────────────────────────
+
+    [HttpPost]
+    public async Task<IActionResult> PdfAnalysieren(IFormFile pdf)
+    {
+        if (pdf == null || pdf.Length == 0)
+            return Json(new { error = "Keine Datei hochgeladen." });
+        if (!pdf.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)
+            && pdf.ContentType != "application/pdf")
+            return Json(new { error = "Nur PDF-Dateien werden unterstützt." });
+        if (pdf.Length > 20 * 1024 * 1024)
+            return Json(new { error = "Datei zu groß (max. 20 MB)." });
+
+        // 1. PDF-Bytes lesen
+        byte[] pdfBytes;
+        using (var ms = new MemoryStream())
+        {
+            await pdf.CopyToAsync(ms);
+            pdfBytes = ms.ToArray();
+        }
+
+        // 2. Text extrahieren (PdfPig)
+        string extractedText;
+        try
+        {
+            var sb = new StringBuilder();
+            using var doc = PdfDocument.Open(pdfBytes);
+            foreach (var page in doc.GetPages())
+            {
+                foreach (var word in page.GetWords())
+                    sb.Append(word.Text).Append(' ');
+                sb.AppendLine();
+            }
+            extractedText = sb.ToString().Trim();
+        }
+        catch (Exception ex)
+        {
+            return Json(new { error = $"PDF konnte nicht gelesen werden: {ex.Message}" });
+        }
+
+        if (string.IsNullOrWhiteSpace(extractedText))
+            return Json(new { error = "Kein lesbarer Text im PDF (ggf. Scan-PDF ohne OCR)." });
+
+        // 3. OpenAI-Analyse
+        var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? _config["OpenAiApiKey"];
+        if (string.IsNullOrWhiteSpace(apiKey))
+            return Json(new { error = "Kein OPENAI_API_KEY konfiguriert." });
+
+        var lgNamen = await _db.Leasinggesellschaften
+            .Where(l => l.IstAktiv).Select(l => l.Name).ToListAsync();
+
+        var antragTypNamen = Enum.GetNames<AntragTyp>();
+        var prompt = $$"""
+            Analysiere das folgende Antragsdokument und extrahiere die Felder für einen Leasingantrag.
+
+            Verfügbare Antragstypen: {{string.Join(", ", antragTypNamen)}}
+            Verfügbare Leasinggesellschaften im System: {{string.Join(", ", lgNamen)}}
+
+            Antworte NUR mit einem JSON-Objekt ohne Erklärungen:
+            {
+              "antragTyp": <einer der verfügbaren Antragstypen als String oder null>,
+              "obligo": <Dezimalzahl ohne Währungssymbol oder null>,
+              "abrechnungsart": <kurzer Text oder null>,
+              "leasinggesellschaft": <exakter Name aus der Liste oder null>,
+              "konfidenz": "hoch" oder "mittel" oder "niedrig"
+            }
+
+            Antragsdokument:
+            {{extractedText[..Math.Min(extractedText.Length, 6000)]}}
+            """;
+
+        try
+        {
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
+            var reqBody = new
+            {
+                model = "gpt-4o-mini",
+                max_tokens = 300,
+                messages = new[]
+                {
+                    new { role = "system", content = "Du bist ein Datenextraktions-Assistent. Antworte ausschließlich mit gültigem JSON." },
+                    new { role = "user",   content = prompt }
+                }
+            };
+            var json    = JsonSerializer.Serialize(reqBody,
+                new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+            var resp    = await client.PostAsync("https://api.openai.com/v1/chat/completions",
+                new StringContent(json, Encoding.UTF8, "application/json"));
+
+            if (!resp.IsSuccessStatusCode)
+                return Json(new { error = "OpenAI-Fehler – bitte API-Key prüfen." });
+
+            using var stream = await resp.Content.ReadAsStreamAsync();
+            var oaiResp  = await JsonSerializer.DeserializeAsync<KiExtraktionResponse>(stream,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            var antwort  = oaiResp?.Choices?.FirstOrDefault()?.Message?.Content ?? "";
+
+            var jsonMatch = Regex.Match(antwort, @"\{[\s\S]*\}");
+            if (!jsonMatch.Success)
+                return Json(new { error = "KI-Antwort konnte nicht interpretiert werden." });
+
+            using var doc  = JsonDocument.Parse(jsonMatch.Value);
+            var root       = doc.RootElement;
+
+            // AntragTyp auflösen
+            var atStr = root.TryGetProperty("antragTyp", out var atEl) && atEl.ValueKind != JsonValueKind.Null
+                ? atEl.GetString() : null;
+            AntragTyp? antragTyp = Enum.TryParse<AntragTyp>(atStr, true, out var at) ? at : null;
+
+            // Leasinggesellschaft auflösen
+            var lgName = root.TryGetProperty("leasinggesellschaft", out var lgEl) && lgEl.ValueKind != JsonValueKind.Null
+                ? lgEl.GetString() : null;
+            int? lgId = null;
+            if (!string.IsNullOrEmpty(lgName))
+                lgId = (await _db.Leasinggesellschaften
+                    .Where(l => l.IstAktiv && l.Name == lgName)
+                    .Select(l => (int?)l.Id).FirstOrDefaultAsync());
+
+            decimal? obligo = root.TryGetProperty("obligo", out var obEl) && obEl.ValueKind == JsonValueKind.Number
+                ? obEl.GetDecimal() : null;
+            var abrechnungsart = root.TryGetProperty("abrechnungsart", out var abEl) && abEl.ValueKind != JsonValueKind.Null
+                ? abEl.GetString() : null;
+            var konfidenz = root.TryGetProperty("konfidenz", out var kEl) ? kEl.GetString() : "niedrig";
+
+            // 4. PDF als Temp-Datei speichern
+            var token   = Guid.NewGuid().ToString("N");
+            var tempDir = Path.Combine(Path.GetTempPath(), "leasinetweb_ki");
+            Directory.CreateDirectory(tempDir);
+            await System.IO.File.WriteAllBytesAsync(
+                Path.Combine(tempDir, $"{token}.pdf"), pdfBytes);
+
+            return Json(new
+            {
+                ok = true,
+                antragTyp     = (int?)antragTyp,
+                antragTypName = atStr,
+                obligo,
+                abrechnungsart,
+                leasinggesellschaftId   = lgId,
+                leasinggesellschaftName = lgName,
+                konfidenz,
+                tempToken = token,
+                dateiname = pdf.FileName
+            });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { error = $"Fehler: {ex.Message}" });
+        }
     }
 
     // ── Status-Aktionen ────────────────────────────────────────────────────────
@@ -259,4 +460,18 @@ public class AntraegeController : BaseController
         ViewBag.AntragTypen = Enum.GetValues<AntragTyp>()
             .Select(t => new SelectListItem(t.ToString(), ((int)t).ToString()));
     }
+}
+
+// ── Interne DTOs für OpenAI-Antwort ──────────────────────────────────────────
+file class KiExtraktionResponse
+{
+    public List<KiExtraktionChoice>? Choices { get; set; }
+}
+file class KiExtraktionChoice
+{
+    public KiExtraktionMessage? Message { get; set; }
+}
+file class KiExtraktionMessage
+{
+    public string? Content { get; set; }
 }

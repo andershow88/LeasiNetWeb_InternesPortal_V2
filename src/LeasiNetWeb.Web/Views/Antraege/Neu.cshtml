@@ -1,60 +1,119 @@
 @model LeasiNetWeb.Web.ViewModels.AntragErstellenViewModel
 @{
-    ViewData["Title"] = "Neuer Antrag";
+    ViewData["Title"] = Model.KiErstellt ? "Neuer Antrag mit KI" : "Neuer Antrag";
 }
 
-<div class="mb-4">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-1">
-            <li class="breadcrumb-item"><a asp-action="Index">Anträge</a></li>
-            <li class="breadcrumb-item active">Neuer Antrag</li>
-        </ol>
-    </nav>
-    <h1 class="h3"><i class="bi bi-plus-circle me-2"></i>Neuer Leasingantrag</h1>
+<div class="mc-page-header">
+    <div>
+        <h1 class="mc-page-title">
+            @if (Model.KiErstellt)
+            {
+                <i class="bi bi-stars me-2" style="color:var(--mc-gold);"></i>
+            }
+            else
+            {
+                <i class="bi bi-plus-circle me-2"></i>
+            }
+            @ViewData["Title"]
+        </h1>
+        <p class="mc-page-subtitle">
+            @if (Model.KiErstellt)
+            {
+                <span>Felder wurden durch KI vorausgefüllt – bitte prüfen, ergänzen und bestätigen.</span>
+            }
+            else
+            {
+                <span>Neuen Leasingantrag anlegen</span>
+            }
+        </p>
+    </div>
+    <a asp-action="Index" class="btn-mc-ghost">
+        <i class="bi bi-arrow-left me-1"></i> Zurück
+    </a>
 </div>
+
+@if (Model.KiErstellt)
+{
+    <div class="alert mb-3" role="alert"
+         style="background:#2a2010; border:1px solid #6b4a00; border-radius:10px;
+                color:#d4a04a; display:flex; align-items:flex-start; gap:.75rem; padding:1rem 1.25rem;">
+        <i class="bi bi-stars" style="font-size:1.2rem; flex-shrink:0; margin-top:.1rem;"></i>
+        <div>
+            <div style="font-weight:700; font-size:.88rem; margin-bottom:.2rem;">KI-vorausgefüllter Antrag</div>
+            <div style="font-size:.82rem; opacity:.85;">
+                Die folgenden Felder wurden automatisch aus dem hochgeladenen Antragsdokument
+                <strong>@(Model.PdfDateiname ?? "PDF")</strong> extrahiert.
+                Bitte prüfen Sie alle Angaben sorgfältig und korrigieren Sie diese bei Bedarf,
+                bevor Sie den Antrag speichern.
+            </div>
+        </div>
+    </div>
+}
 
 <div class="row justify-content-center">
     <div class="col-md-7">
-        <div class="card shadow-sm">
-            <div class="card-body p-4">
+        <div class="mc-card">
+            <div class="mc-card-header">
+                <h2 class="mc-card-title">
+                    <i class="bi bi-file-earmark-text"></i> Antragsdaten
+                </h2>
+            </div>
+            <div class="mc-card-body">
                 <form asp-action="Neu" method="post">
                     @Html.AntiForgeryToken()
-                    <div asp-validation-summary="ModelOnly" class="alert alert-danger small"></div>
+                    <input type="hidden" asp-for="KiErstellt" />
+                    <input type="hidden" asp-for="PdfTempToken" />
+                    <input type="hidden" asp-for="PdfDateiname" />
+
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger small mb-3"></div>
 
                     <div class="mb-3">
-                        <label asp-for="AntragTyp" class="form-label fw-semibold"></label>
-                        <select asp-for="AntragTyp" asp-items="ViewBag.AntragTypen" class="form-select">
+                        <label asp-for="AntragTyp" class="form-label fw-semibold" style="font-size:.85rem;"></label>
+                        <select asp-for="AntragTyp" asp-items="ViewBag.AntragTypen" class="form-select"
+                                style="@(Model.KiErstellt && Model.AntragTyp != default ? "border-color:var(--mc-gold);" : "")">
                             <option value="">Bitte wählen…</option>
                         </select>
                         <span asp-validation-for="AntragTyp" class="text-danger small"></span>
                     </div>
 
                     <div class="mb-3">
-                        <label asp-for="LeasinggesellschaftId" class="form-label fw-semibold"></label>
-                        <select asp-for="LeasinggesellschaftId" asp-items="ViewBag.Leasinggesellschaften" class="form-select">
+                        <label asp-for="LeasinggesellschaftId" class="form-label fw-semibold" style="font-size:.85rem;"></label>
+                        <select asp-for="LeasinggesellschaftId" asp-items="ViewBag.Leasinggesellschaften" class="form-select"
+                                style="@(Model.KiErstellt && Model.LeasinggesellschaftId.HasValue ? "border-color:var(--mc-gold);" : "")">
                             <option value="">– keine Auswahl –</option>
                         </select>
                     </div>
 
                     <div class="mb-3">
-                        <label asp-for="Obligo" class="form-label fw-semibold"></label>
+                        <label asp-for="Obligo" class="form-label fw-semibold" style="font-size:.85rem;"></label>
                         <div class="input-group">
-                            <input asp-for="Obligo" class="form-control" type="number" step="0.01" min="0.01" />
+                            <input asp-for="Obligo" class="form-control" type="number" step="0.01" min="0.01"
+                                   style="@(Model.KiErstellt && Model.Obligo > 0 ? "border-color:var(--mc-gold);" : "")" />
                             <span class="input-group-text">EUR</span>
                         </div>
                         <span asp-validation-for="Obligo" class="text-danger small"></span>
                     </div>
 
                     <div class="mb-4">
-                        <label asp-for="Abrechnungsart" class="form-label fw-semibold"></label>
-                        <input asp-for="Abrechnungsart" class="form-control" placeholder="z. B. Monatlich, Vierteljährlich…" />
+                        <label asp-for="Abrechnungsart" class="form-label fw-semibold" style="font-size:.85rem;"></label>
+                        <input asp-for="Abrechnungsart" class="form-control"
+                               placeholder="z. B. Monatlich, Vierteljährlich…"
+                               style="@(Model.KiErstellt && !string.IsNullOrEmpty(Model.Abrechnungsart) ? "border-color:var(--mc-gold);" : "")" />
                     </div>
 
+                    @if (Model.KiErstellt)
+                    {
+                        <div style="font-size:.75rem; color:var(--mc-text-muted); margin-bottom:1rem; display:flex; align-items:center; gap:.4rem;">
+                            <i class="bi bi-stars" style="color:var(--mc-gold);"></i>
+                            Gold umrahmte Felder wurden durch die KI vorausgefüllt.
+                        </div>
+                    }
+
                     <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn-mc-primary">
                             <i class="bi bi-save me-1"></i> Als Entwurf speichern
                         </button>
-                        <a asp-action="Index" class="btn btn-outline-secondary">Abbrechen</a>
+                        <a asp-action="Index" class="btn-mc-ghost">Abbrechen</a>
                     </div>
                 </form>
             </div>

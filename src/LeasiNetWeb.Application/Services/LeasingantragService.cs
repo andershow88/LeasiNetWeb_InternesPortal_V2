@@ -99,6 +99,7 @@ public class LeasingantragService : ILeasingantragService
             LeasinggesellschaftId = dto.LeasinggesellschaftId,
             Obligo = dto.Obligo,
             Abrechnungsart = dto.Abrechnungsart,
+            KiErstellt = dto.KiErstellt,
             EingereichtVonId = benutzerId,
             ErstelltAm = DateTime.UtcNow,
             GeaendertAm = DateTime.UtcNow,
@@ -227,7 +228,8 @@ public class LeasingantragService : ILeasingantragService
         a.EingereichtVon.Anzeigename,
         a.Leasinggesellschaft?.Name,
         a.SachbearbeiterMB?.Anzeigename,
-        a.Obligo, a.ErstelltAm, a.GeaendertAm, a.ZweiteVoteErforderlich);
+        a.Obligo, a.ErstelltAm, a.GeaendertAm, a.ZweiteVoteErforderlich,
+        a.KiErstellt);
 
     private async Task<string> GeneriereAntragNummer()
     {

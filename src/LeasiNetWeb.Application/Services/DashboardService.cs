@@ -34,7 +34,7 @@ public class DashboardService : IDashboardService
             .Select(a => new AntragListeDto(a.Id, a.AntragNummer, a.AntragTyp, a.Status,
                 a.EingereichtVon.Anzeigename, a.Leasinggesellschaft?.Name,
                 a.SachbearbeiterMB?.Anzeigename, a.Obligo, a.ErstelltAm, a.GeaendertAm,
-                a.ZweiteVoteErforderlich))
+                a.ZweiteVoteErforderlich, a.KiErstellt))
             .ToList();
 
         var statusZaehler = antraege

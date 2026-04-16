@@ -13,7 +13,8 @@ public record AntragListeDto(
     decimal Obligo,
     DateTime ErstelltAm,
     DateTime GeaendertAm,
-    bool ZweiteVoteErforderlich
+    bool ZweiteVoteErforderlich,
+    bool KiErstellt
 );
 
 public record AntragDetailDto(
@@ -47,7 +48,8 @@ public record AntragErstellenDto(
     AntragTyp AntragTyp,
     int? LeasinggesellschaftId,
     decimal Obligo,
-    string? Abrechnungsart
+    string? Abrechnungsart,
+    bool KiErstellt = false
 );
 
 public record AntragAktualisierenDto(

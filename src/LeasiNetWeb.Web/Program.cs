@@ -147,6 +147,10 @@ try
     try { await db.Database.ExecuteSqlRawAsync("ALTER TABLE \"InternePruefungen\" ADD COLUMN \"PruefungNummer\" TEXT NULL"); }
     catch { /* Spalte bereits vorhanden */ }
 
+    // KiErstellt column (nachträgliche Schema-Erweiterung)
+    try { await db.Database.ExecuteSqlRawAsync("ALTER TABLE \"Leasingantraege\" ADD COLUMN \"KiErstellt\" BOOLEAN NOT NULL DEFAULT FALSE"); }
+    catch { /* Spalte bereits vorhanden */ }
+
     // PruefungsSchritte-Tabelle (neu in dieser Version) — provider-specific SQL
     bool isPostgres = !string.IsNullOrEmpty(databaseUrl);
     if (isPostgres)

@@ -45,6 +45,8 @@ public class Leasingantrag : BaseEntity
     public bool Archiviert { get; set; }
     public DateTime? ArchiviertAm { get; set; }
 
+    public bool KiErstellt { get; set; }
+
     // Navigation
     public ICollection<Leasingobjekt> Objekte { get; set; } = new List<Leasingobjekt>();
     public ICollection<InternePruefung> InternePruefungen { get; set; } = new List<InternePruefung>();
