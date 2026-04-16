@@ -24,6 +24,15 @@
     </div>
     <!-- Aktionsbuttons -->
     <div class="d-flex gap-2">
+        @if (Model.Status == AntragStatus.KiEingereicht)
+        {
+            <form asp-action="KiBestaetigen" asp-route-id="@Model.Id" method="post">
+                @Html.AntiForgeryToken()
+                <button class="btn btn-warning" style="background:linear-gradient(135deg,#c9a84c,#e0c060); border:none; color:#1a1200; font-weight:600;">
+                    <i class="bi bi-stars me-1"></i>Bestätigen &amp; In Prüfung nehmen
+                </button>
+            </form>
+        }
         @if (Model.Status == AntragStatus.Entwurf)
         {
             <form asp-action="Einreichen" asp-route-id="@Model.Id" method="post">
@@ -104,6 +113,26 @@
         }
     </div>
 </div>
+
+@if (Model.Status == AntragStatus.KiEingereicht || Model.KiErstellt)
+{
+    <div style="background:linear-gradient(135deg,rgba(201,168,76,.12),rgba(201,168,76,.05)); border:1.5px solid rgba(201,168,76,.4); border-radius:var(--mc-radius); padding:1rem 1.25rem; margin-bottom:1.25rem; display:flex; align-items:center; gap:.75rem;">
+        <i class="bi bi-stars" style="font-size:1.4rem; color:#c9a84c; flex-shrink:0;"></i>
+        <div>
+            <div style="font-weight:700; font-size:.9rem; color:#c9a84c;">Mit KI eingereicht</div>
+            <div style="font-size:.82rem; color:var(--mc-text-muted);">
+                @if (Model.Status == AntragStatus.KiEingereicht)
+                {
+                    <span>Dieser Antrag wurde automatisch aus einem Antragsdokument extrahiert und wartet auf Ihre Prüfung. Bitte kontrollieren Sie die Felder und bestätigen Sie den Antrag.</span>
+                }
+                else
+                {
+                    <span>Dieser Antrag wurde mit KI-Unterstützung aus einem Antragsdokument erstellt.</span>
+                }
+            </div>
+        </div>
+    </div>
+}
 
 <div class="row g-4">
     <!-- Stammdaten -->
@@ -574,6 +603,7 @@ function renderZusammenfassung() {
         AntragStatus.Genehmigt              => "badge-success",
         AntragStatus.Abgelehnt              => "badge-danger",
         AntragStatus.Archiviert             => "badge-secondary",
+        AntragStatus.KiEingereicht          => "badge-warning",
         _                                   => "badge-secondary"
     };
 }

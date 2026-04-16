@@ -73,6 +73,7 @@ public class LeasingantragService : ILeasingantragService
             antrag.Archiviert,
             antrag.ErstelltAm,
             antrag.GeaendertAm,
+            antrag.KiErstellt,
             antrag.Objekte.Select(o => new LeasingobjektDto(o.Id, o.Bezeichnung, o.IstNeu,
                 o.Listenpreis, o.Rabatt, o.FinanzierungsBasis, o.NAK, o.Hersteller, o.Lieferant,
                 o.Geraetetyp?.Bezeichnung)),
@@ -130,6 +131,32 @@ public class LeasingantragService : ILeasingantragService
         antrag.GeaendertVonId = benutzerId;
 
         await _db.SaveChangesAsync();
+    }
+
+    public async Task<int> ErstelleKiAntrag(AntragErstellenDto dto, int benutzerId)
+    {
+        var antrag = new Leasingantrag
+        {
+            AntragNummer = await GeneriereAntragNummer(),
+            AntragTyp = dto.AntragTyp,
+            Status = AntragStatus.KiEingereicht,
+            LeasinggesellschaftId = dto.LeasinggesellschaftId,
+            Obligo = dto.Obligo,
+            Abrechnungsart = dto.Abrechnungsart,
+            KiErstellt = true,
+            EingereichtVonId = benutzerId,
+            ErstelltAm = DateTime.UtcNow,
+            GeaendertAm = DateTime.UtcNow,
+            ErstelltVonId = benutzerId,
+            GeaendertVonId = benutzerId
+        };
+
+        _db.Leasingantraege.Add(antrag);
+        await _db.SaveChangesAsync();
+
+        await _ereignis.EreignisAufzeichnen(antrag.Id, EreignisTyp.AntragEingereicht, benutzerId, "Via KI-Analyse eingereicht");
+
+        return antrag.Id;
     }
 
     public async Task<bool> StatusWechsel(int antragId, AntragStatus neuerStatus, int benutzerId, string? kommentar = null)
@@ -256,6 +283,8 @@ public class LeasingantragService : ILeasingantragService
         (AntragStatus.ZweiteVoteErforderlich, AntragStatus.Genehmigt) => true,
         (AntragStatus.ZweiteVoteErforderlich, AntragStatus.Abgelehnt) => true,
         (AntragStatus.InterneKontrolleErforderlich, AntragStatus.BeiMitarbeiter) => true,
+        (AntragStatus.KiEingereicht, AntragStatus.InPruefung) => true,
+        (AntragStatus.KiEingereicht, AntragStatus.Abgelehnt) => true,
         (AntragStatus.Genehmigt, AntragStatus.Archiviert) => true,
         (AntragStatus.Abgelehnt, AntragStatus.Archiviert) => true,
         _ => false

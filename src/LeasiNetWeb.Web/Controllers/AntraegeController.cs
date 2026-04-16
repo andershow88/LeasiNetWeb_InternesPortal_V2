@@ -325,6 +325,55 @@ public class AntraegeController : BaseController
         }
     }
 
+    // ── KI-Antrag direkt erstellen ─────────────────────────────────────────────
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> KiAntragErstellen(int? antragTyp, decimal? obligo,
+        string? abrechnungsart, int? leasinggesellschaftId, string? tempToken, string? dateiname)
+    {
+        if (antragTyp == null || !Enum.IsDefined(typeof(AntragTyp), antragTyp.Value))
+            return Json(new { error = "Ungültiger Antragstyp." });
+
+        var id = await _antraege.ErstelleKiAntrag(
+            new AntragErstellenDto((AntragTyp)antragTyp.Value, leasinggesellschaftId,
+                obligo ?? 0, abrechnungsart, KiErstellt: true),
+            AktuellerBenutzerId);
+
+        // PDF-Anhang aus Temp-Verzeichnis
+        if (!string.IsNullOrWhiteSpace(tempToken))
+        {
+            var tempPfad = Path.Combine(Path.GetTempPath(), "leasinetweb_ki", $"{tempToken}.pdf");
+            if (System.IO.File.Exists(tempPfad))
+            {
+                try
+                {
+                    await using var fs = System.IO.File.OpenRead(tempPfad);
+                    var fn = string.IsNullOrWhiteSpace(dateiname) ? "Antragsdokument_KI.pdf" : dateiname;
+                    await _anhaenge.HochladenAsync(fs, fn, "application/pdf",
+                        new FileInfo(tempPfad).Length, AnhangTyp.Antragsdokument,
+                        AktuellerBenutzerId, antragId: id);
+                }
+                catch { /* Anhang-Fehler blockiert nicht */ }
+                finally
+                {
+                    try { System.IO.File.Delete(tempPfad); } catch { }
+                }
+            }
+        }
+
+        return Json(new { ok = true, antragId = id });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> KiBestaetigen(int id)
+    {
+        await _antraege.StatusWechsel(id, AntragStatus.InPruefung, AktuellerBenutzerId,
+            "KI-Antrag von Mitarbeiter bestätigt und in Prüfung übernommen");
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
     // ── Status-Aktionen ────────────────────────────────────────────────────────
 
     [HttpPost]

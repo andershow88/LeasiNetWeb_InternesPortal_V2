@@ -38,6 +38,7 @@ public record AntragDetailDto(
     bool Archiviert,
     DateTime ErstelltAm,
     DateTime GeaendertAm,
+    bool KiErstellt,
     IEnumerable<LeasingobjektDto> Objekte,
     IEnumerable<KommentarDto> Kommentare,
     IEnumerable<AnhangDto> Anhaenge,

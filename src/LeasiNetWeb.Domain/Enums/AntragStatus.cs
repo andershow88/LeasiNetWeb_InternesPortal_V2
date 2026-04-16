@@ -16,5 +16,6 @@ public enum AntragStatus
     Genehmigt = 7,
     Abgelehnt = 8,
     Archiviert = 9,
-    Storniert = 10
+    Storniert = 10,
+    KiEingereicht = 11
 }

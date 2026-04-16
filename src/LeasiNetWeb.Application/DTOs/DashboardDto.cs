@@ -12,7 +12,8 @@ public record DashboardDto(
     int UngeleseneNachrichten,
     decimal GesamtObligoAktiv,
     IEnumerable<AntragListeDto> MeineAktuellenAntraege,
-    IEnumerable<StatusZaehlerDto> AntraegePorStatus
+    IEnumerable<StatusZaehlerDto> AntraegePorStatus,
+    IEnumerable<AntragListeDto> KiEingereichtAntraege
 );
 
 public record StatusZaehlerDto(AntragStatus Status, int Anzahl);

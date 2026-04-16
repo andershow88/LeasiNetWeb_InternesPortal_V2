@@ -142,6 +142,63 @@
     </div>
 </div>
 
+<!-- Mit KI eingereichte Anträge -->
+@if (Model.KiEingereichtAntraege.Any())
+{
+    <div class="mc-card" style="border:1.5px solid rgba(201,168,76,.35);">
+        <div class="mc-card-header" style="background:linear-gradient(135deg,rgba(201,168,76,.1),rgba(201,168,76,.04));">
+            <h2 class="mc-card-title" style="color:var(--mc-gold);">
+                <i class="bi bi-stars"></i> Mit KI eingereicht
+                <span class="mc-badge badge-warning ms-2">@Model.KiEingereichtAntraege.Count()</span>
+            </h2>
+            <a asp-controller="Antraege" asp-action="Index" class="btn-mc-ghost" style="font-size:.8rem;">
+                <i class="bi bi-arrow-right"></i> Alle anzeigen
+            </a>
+        </div>
+        <div class="mc-card-body" style="padding:0;">
+            <div class="mc-table-wrapper">
+                <table class="mc-table">
+                    <thead>
+                        <tr>
+                            <th>Antrag-Nr.</th>
+                            <th>Typ</th>
+                            <th>Eingereicht von</th>
+                            <th>Leasinggesellschaft</th>
+                            <th style="text-align:right;">Obligo</th>
+                            <th>Eingereicht</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var antrag in Model.KiEingereichtAntraege)
+                        {
+                            <tr>
+                                <td>
+                                    <code>@antrag.AntragNummer</code>
+                                    <span class="mc-badge ms-1" style="background:#2a2010; color:#d4a04a; border:1px solid #6b4a00; font-size:.7rem;">
+                                        <i class="bi bi-stars"></i> KI
+                                    </span>
+                                </td>
+                                <td>@antrag.AntragTyp</td>
+                                <td>@antrag.EingereichtVon</td>
+                                <td>@(antrag.Leasinggesellschaft ?? "–")</td>
+                                <td style="text-align:right;" class="text-currency">@antrag.Obligo.ToString("N2") €</td>
+                                <td style="color:var(--mc-text-muted); font-size:0.82rem;">@antrag.ErstelltAm.ToString("dd.MM.yyyy HH:mm")</td>
+                                <td>
+                                    <a asp-controller="Antraege" asp-action="Details" asp-route-id="@antrag.Id"
+                                       class="btn-mc-ghost" style="font-size:0.78rem; padding:0.3rem 0.7rem; color:var(--mc-gold); border-color:rgba(201,168,76,.4);">
+                                        Prüfen <i class="bi bi-chevron-right"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+
 <!-- ── KI-Upload Modal ──────────────────────────────────────────────────────── -->
 <div class="modal fade" id="kiUploadModalEl" tabindex="-1" aria-labelledby="kiUploadLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -196,9 +253,10 @@
                 <button type="button" class="btn-mc-primary" id="kiAnalysierenBtn" onclick="kiAnalysieren()" disabled>
                     <i class="bi bi-stars me-1"></i> Analysieren
                 </button>
-                <a href="#" id="kiWeiterBtn" class="btn-mc-primary" style="display:none;">
-                    <i class="bi bi-arrow-right me-1"></i> Antrag prüfen & anlegen
-                </a>
+                <button type="button" id="kiWeiterBtn" class="btn-mc-primary" style="display:none;"
+                        onclick="kiAntragEinreichen()">
+                    <i class="bi bi-stars me-1"></i> Antrag einreichen
+                </button>
             </div>
         </div>
     </div>
@@ -208,6 +266,7 @@
 <script>
 const kiUploadModal = new bootstrap.Modal(document.getElementById('kiUploadModalEl'));
 let kiGewaehleDatei = null;
+let kiErgebnis = null;
 
 function kiHandleDrop(e) {
     e.preventDefault();
@@ -235,13 +294,19 @@ async function kiAnalysieren() {
     document.getElementById('kiSchritt1').style.display = 'none';
     document.getElementById('kiSchritt2').style.display = '';
     document.getElementById('kiAnalysierenBtn').style.display = 'none';
-    document.querySelector('.modal-footer .btn-mc-ghost').style.display = 'none';
+    document.querySelector('#kiUploadModalEl .modal-footer .btn-mc-ghost').style.display = 'none';
     const fd = new FormData();
     fd.append('pdf', kiGewaehleDatei);
+    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
     try {
-        const resp = await fetch('/Antraege/PdfAnalysieren', { method: 'POST', body: fd });
+        const resp = await fetch('/Antraege/PdfAnalysieren', {
+            method: 'POST',
+            headers: token ? { 'RequestVerificationToken': token } : {},
+            body: fd
+        });
         const data = await resp.json();
         if (data.error) { kiZeigeSchritt1Fehler(data.error); return; }
+        kiErgebnis = data;
         document.getElementById('kiSchritt2').style.display = 'none';
         document.getElementById('kiSchritt3').style.display = '';
         const konfMap = { hoch: ['badge-success','Hohe Konfidenz'], mittel: ['badge-warning','Mittlere Konfidenz'], niedrig: ['badge-secondary','Niedrige Konfidenz'] };
@@ -258,35 +323,63 @@ async function kiAnalysieren() {
         document.getElementById('kiErgebnisTabelle').innerHTML = rows.map(([k,v]) =>
             `<tr><td style="padding:.35rem .5rem; color:var(--mc-text-muted); white-space:nowrap;">${k}</td><td style="padding:.35rem .5rem; color:var(--mc-text); font-weight:500;">${v}</td></tr>`
         ).join('');
-        const params = new URLSearchParams({ ki: '1' });
-        if (data.antragTyp != null)     params.set('at',   data.antragTyp);
-        if (data.obligo != null)        params.set('ob',   data.obligo);
-        if (data.abrechnungsart)        params.set('ab',   data.abrechnungsart);
-        if (data.leasinggesellschaftId) params.set('lgId', data.leasinggesellschaftId);
-        if (data.tempToken)             params.set('token',data.tempToken);
-        if (data.dateiname)             params.set('fn',   data.dateiname);
-        document.getElementById('kiWeiterBtn').href = '/Antraege/Neu?' + params.toString();
         document.getElementById('kiWeiterBtn').style.display = '';
-        document.querySelector('.modal-footer .btn-mc-ghost').style.display = '';
+        document.querySelector('#kiUploadModalEl .modal-footer .btn-mc-ghost').style.display = '';
     } catch (e) { kiZeigeSchritt1Fehler('Verbindungsfehler: ' + e.message); }
+}
+async function kiAntragEinreichen() {
+    if (!kiErgebnis) return;
+    const btn = document.getElementById('kiWeiterBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Wird eingereicht…';
+    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+    const fd = new FormData();
+    if (token) fd.append('__RequestVerificationToken', token);
+    if (kiErgebnis.antragTyp != null)          fd.append('antragTyp',            kiErgebnis.antragTyp);
+    if (kiErgebnis.obligo != null)             fd.append('obligo',               kiErgebnis.obligo);
+    if (kiErgebnis.abrechnungsart)             fd.append('abrechnungsart',        kiErgebnis.abrechnungsart);
+    if (kiErgebnis.leasinggesellschaftId)      fd.append('leasinggesellschaftId', kiErgebnis.leasinggesellschaftId);
+    if (kiErgebnis.tempToken)                  fd.append('tempToken',             kiErgebnis.tempToken);
+    if (kiErgebnis.dateiname)                  fd.append('dateiname',             kiErgebnis.dateiname);
+    try {
+        const resp = await fetch('/Antraege/KiAntragErstellen', { method: 'POST', body: fd });
+        const data = await resp.json();
+        if (data.error) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-stars me-1"></i> Antrag einreichen';
+            document.getElementById('kiUploadFehler').textContent = data.error;
+            document.getElementById('kiUploadFehler').style.display = '';
+            return;
+        }
+        kiUploadModal.hide();
+        window.location.href = '/Antraege/Details/' + data.antragId;
+    } catch (e) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-stars me-1"></i> Antrag einreichen';
+        document.getElementById('kiUploadFehler').textContent = 'Fehler beim Einreichen: ' + e.message;
+        document.getElementById('kiUploadFehler').style.display = '';
+    }
 }
 function kiZeigeSchritt1Fehler(msg) {
     document.getElementById('kiSchritt2').style.display = 'none';
     document.getElementById('kiSchritt1').style.display = '';
     document.getElementById('kiAnalysierenBtn').style.display = '';
     document.getElementById('kiAnalysierenBtn').disabled = false;
-    document.querySelector('.modal-footer .btn-mc-ghost').style.display = '';
+    document.querySelector('#kiUploadModalEl .modal-footer .btn-mc-ghost').style.display = '';
     document.getElementById('kiUploadFehler').textContent = msg;
     document.getElementById('kiUploadFehler').style.display = '';
 }
 document.getElementById('kiUploadModalEl').addEventListener('hidden.bs.modal', function () {
     kiGewaehleDatei = null;
+    kiErgebnis = null;
     document.getElementById('kiSchritt1').style.display = '';
     document.getElementById('kiSchritt2').style.display = 'none';
     document.getElementById('kiSchritt3').style.display = 'none';
     document.getElementById('kiAnalysierenBtn').style.display = '';
     document.getElementById('kiAnalysierenBtn').disabled = true;
     document.getElementById('kiWeiterBtn').style.display = 'none';
+    document.getElementById('kiWeiterBtn').disabled = false;
+    document.getElementById('kiWeiterBtn').innerHTML = '<i class="bi bi-stars me-1"></i> Antrag einreichen';
     document.getElementById('kiDateiname').textContent = '';
     document.getElementById('kiDropzone').style.borderColor = 'var(--mc-border)';
     document.getElementById('kiUploadFehler').style.display = 'none';
@@ -307,6 +400,7 @@ document.getElementById('kiUploadModalEl').addEventListener('hidden.bs.modal', f
         AntragStatus.Genehmigt                => "badge-success",
         AntragStatus.Abgelehnt                => "badge-danger",
         AntragStatus.Archiviert               => "badge-secondary",
+        AntragStatus.KiEingereicht            => "badge-warning",
         _                                     => "badge-secondary"
     };
 }

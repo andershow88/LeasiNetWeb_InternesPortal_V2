@@ -49,6 +49,15 @@ public class DashboardService : IDashboardService
             .Where(a => a.Status == AntragStatus.Genehmigt && !a.Archiviert)
             .SumAsync(a => a.Obligo);
 
+        var kiEingereichtAntraege = antraege
+            .Where(a => a.Status == AntragStatus.KiEingereicht)
+            .OrderByDescending(a => a.ErstelltAm)
+            .Select(a => new AntragListeDto(a.Id, a.AntragNummer, a.AntragTyp, a.Status,
+                a.EingereichtVon.Anzeigename, a.Leasinggesellschaft?.Name,
+                a.SachbearbeiterMB?.Anzeigename, a.Obligo, a.ErstelltAm, a.GeaendertAm,
+                a.ZweiteVoteErforderlich, a.KiErstellt))
+            .ToList();
+
         return new DashboardDto(
             OffeneAntraege: antraege.Count(a => a.Status == AntragStatus.Eingereicht),
             AntraegeInBearbeitung: antraege.Count(a =>
@@ -60,7 +69,8 @@ public class DashboardService : IDashboardService
             UngeleseneNachrichten: await _nachrichten.UngeleseneAnzahl(benutzerId),
             GesamtObligoAktiv: gesamtObligo,
             MeineAktuellenAntraege: meineAntraege,
-            AntraegePorStatus: statusZaehler
+            AntraegePorStatus: statusZaehler,
+            KiEingereichtAntraege: kiEingereichtAntraege
         );
     }
 }
