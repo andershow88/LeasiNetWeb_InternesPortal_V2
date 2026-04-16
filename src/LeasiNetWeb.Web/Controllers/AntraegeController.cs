@@ -34,16 +34,34 @@ public class AntraegeController : BaseController
     }
 
     public async Task<IActionResult> MeinePruefungen()
-        => View("Index", await _antraege.GetMeineZuPruefendenAntraege(AktuellerBenutzerId));
+    {
+        ViewBag.SeitenTitel      = "Meine Prüfungen";
+        ViewBag.SeitenUntertitel = "Anträge, die auf Ihre Prüfung warten";
+        ViewBag.SeitenIcon       = "bi-clipboard-check";
+        return View("Index", await _antraege.GetMeineZuPruefendenAntraege(AktuellerBenutzerId));
+    }
 
     public async Task<IActionResult> MeineGenehmigungen()
-        => View("Index", await _antraege.GetMeineZuGenehmigendenAntraege(AktuellerBenutzerId));
+    {
+        ViewBag.SeitenTitel      = "Genehmigungen";
+        ViewBag.SeitenUntertitel = "Anträge, die Ihre Genehmigung erfordern";
+        ViewBag.SeitenIcon       = "bi-check2-square";
+        return View("Index", await _antraege.GetMeineZuGenehmigendenAntraege(AktuellerBenutzerId));
+    }
 
     public async Task<IActionResult> MeineZweiteVoten()
-        => View("Index", await _antraege.GetMeineZweiteVotenAntraege(AktuellerBenutzerId));
+    {
+        ViewBag.SeitenTitel      = "2. Vote";
+        ViewBag.SeitenUntertitel = "Anträge, bei denen ein zweites Votum erforderlich ist";
+        ViewBag.SeitenIcon       = "bi-person-check";
+        return View("Index", await _antraege.GetMeineZweiteVotenAntraege(AktuellerBenutzerId));
+    }
 
     public async Task<IActionResult> Archiv()
     {
+        ViewBag.SeitenTitel      = "Archiv";
+        ViewBag.SeitenUntertitel = "Archivierte Leasinganträge";
+        ViewBag.SeitenIcon       = "bi-archive";
         var alle = await _db.Leasingantraege
             .Include(a => a.EingereichtVon)
             .Include(a => a.Leasinggesellschaft)

@@ -40,16 +40,21 @@
                     <i class="bi bi-speedometer2"></i> Dashboard
                 </a>
             </li>
+            @{
+                var ctrl   = ViewContext.RouteData.Values["controller"]?.ToString();
+                var action = ViewContext.RouteData.Values["action"]?.ToString();
+            }
             <li class="mc-nav-item">
                 <a asp-controller="Antraege" asp-action="Index"
-                   class="mc-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Antraege" ? "active" : "")">
+                   class="mc-nav-link @(ctrl == "Antraege" && action == "Index" ? "active" : "")">
                     <i class="bi bi-file-earmark-text"></i> Alle Anträge
                 </a>
             </li>
             @if (User.HasClaim("Rolle", "SachbearbeiterMB") || User.HasClaim("Rolle", "Administrator"))
             {
                 <li class="mc-nav-item">
-                    <a asp-controller="Antraege" asp-action="MeinePruefungen" class="mc-nav-link">
+                    <a asp-controller="Antraege" asp-action="MeinePruefungen"
+                       class="mc-nav-link @(ctrl == "Antraege" && action == "MeinePruefungen" ? "active" : "")">
                         <i class="bi bi-clipboard-check"></i> Meine Prüfungen
                     </a>
                 </li>
@@ -58,7 +63,7 @@
             {
                 <li class="mc-nav-item">
                     <a asp-controller="InternePruefung" asp-action="Index"
-                       class="mc-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "InternePruefung" ? "active" : "")">
+                       class="mc-nav-link @(ctrl == "InternePruefung" ? "active" : "")">
                         <i class="bi bi-shield-check"></i> Interne Kontrollen
                     </a>
                 </li>
@@ -66,24 +71,27 @@
             @if (User.HasClaim("Rolle", "Genehmiger") || User.HasClaim("Rolle", "Administrator"))
             {
                 <li class="mc-nav-item">
-                    <a asp-controller="Antraege" asp-action="MeineGenehmigungen" class="mc-nav-link">
+                    <a asp-controller="Antraege" asp-action="MeineGenehmigungen"
+                       class="mc-nav-link @(ctrl == "Antraege" && action == "MeineGenehmigungen" ? "active" : "")">
                         <i class="bi bi-check2-square"></i> Genehmigungen
                     </a>
                 </li>
                 <li class="mc-nav-item">
-                    <a asp-controller="Antraege" asp-action="MeineZweiteVoten" class="mc-nav-link">
+                    <a asp-controller="Antraege" asp-action="MeineZweiteVoten"
+                       class="mc-nav-link @(ctrl == "Antraege" && action == "MeineZweiteVoten" ? "active" : "")">
                         <i class="bi bi-person-check"></i> 2. Vote
                     </a>
                 </li>
             }
             <li class="mc-nav-item">
                 <a asp-controller="Vertraege" asp-action="Index"
-                   class="mc-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Vertraege" ? "active" : "")">
+                   class="mc-nav-link @(ctrl == "Vertraege" ? "active" : "")">
                     <i class="bi bi-file-earmark-ruled"></i> Verträge
                 </a>
             </li>
             <li class="mc-nav-item">
-                <a asp-controller="Antraege" asp-action="Archiv" class="mc-nav-link">
+                <a asp-controller="Antraege" asp-action="Archiv"
+                   class="mc-nav-link @(ctrl == "Antraege" && action == "Archiv" ? "active" : "")">
                     <i class="bi bi-archive"></i> Archiv
                 </a>
             </li>

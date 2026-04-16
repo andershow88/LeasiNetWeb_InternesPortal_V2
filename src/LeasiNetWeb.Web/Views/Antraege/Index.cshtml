@@ -1,17 +1,23 @@
 @using LeasiNetWeb.Domain.Enums
 @model IEnumerable<LeasiNetWeb.Application.DTOs.AntragListeDto>
 @{
-    ViewData["Title"] = "Leasinganträge";
+    var seitenTitel      = ViewBag.SeitenTitel      as string ?? "Leasinganträge";
+    var seitenUntertitel = ViewBag.SeitenUntertitel as string ?? "Alle Anträge im Überblick";
+    var seitenIcon       = ViewBag.SeitenIcon       as string ?? "bi-file-earmark-text";
+    ViewData["Title"] = seitenTitel;
 }
 
 <div class="mc-page-header">
     <div>
-        <h1 class="mc-page-title"><i class="bi bi-file-earmark-text me-2"></i>Leasinganträge</h1>
-        <p class="mc-page-subtitle">Alle Anträge im Überblick</p>
+        <h1 class="mc-page-title"><i class="bi @seitenIcon me-2"></i>@seitenTitel</h1>
+        <p class="mc-page-subtitle">@seitenUntertitel</p>
     </div>
-    <a asp-action="Neu" class="btn-mc-primary">
-        <i class="bi bi-plus-circle"></i> Neuer Antrag
-    </a>
+    @if (ViewBag.SeitenTitel == null)
+    {
+        <a asp-action="Neu" class="btn-mc-primary">
+            <i class="bi bi-plus-circle"></i> Neuer Antrag
+        </a>
+    }
 </div>
 
 <!-- Status-Filter -->
