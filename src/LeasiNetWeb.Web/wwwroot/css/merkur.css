@@ -854,6 +854,38 @@ a:hover { text-decoration: underline; }
     flex-shrink: 0;
 }
 
+/* Hilfe info boxes */
+.mc-info-box {
+    padding: 1rem;
+    border-radius: var(--mc-radius-sm);
+}
+.mc-info-box-title {
+    font-weight: 700;
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
+}
+.mc-info-box-body {
+    font-size: 0.78rem;
+    color: var(--mc-text-muted);
+}
+.mc-info-box-default {
+    background: #f7f9fc;
+    border: 1px solid var(--mc-border);
+}
+.mc-info-box-default .mc-info-box-title { color: var(--mc-navy); }
+
+.mc-info-box-success {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+}
+.mc-info-box-success .mc-info-box-title { color: #15803d; }
+
+.mc-info-box-warning {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+}
+.mc-info-box-warning .mc-info-box-title { color: #b45309; }
+
 /* ============================================================
    RESPONSIVE
    ============================================================ */
@@ -1541,4 +1573,59 @@ a:hover { text-decoration: underline; }
 [data-theme="dark"] .border-start,
 [data-theme="dark"] .border-end {
     border-color: var(--mc-border) !important;
+}
+
+/* ============================================================
+   DARK MODE – ACCORDION (Bootstrap override)
+   ============================================================ */
+[data-theme="dark"] .accordion-item {
+    background: var(--mc-bg-card);
+    border-color: var(--mc-border);
+    color: var(--mc-text);
+}
+
+[data-theme="dark"] .accordion-button {
+    background: var(--mc-bg-card) !important;
+    color: var(--mc-text) !important;
+    box-shadow: none !important;
+}
+
+[data-theme="dark"] .accordion-button:not(.collapsed) {
+    background: #252538 !important;
+    color: var(--mc-primary-dark) !important;
+    box-shadow: none !important;
+}
+
+/* Bootstrap's chevron icon – invert it for dark backgrounds */
+[data-theme="dark"] .accordion-button::after {
+    filter: invert(0.8) brightness(1.5);
+}
+
+[data-theme="dark"] .accordion-body {
+    background: var(--mc-bg-card);
+    color: var(--mc-text-muted);
+}
+
+/* ============================================================
+   DARK MODE – HILFE INFO BOXES
+   ============================================================ */
+[data-theme="dark"] .mc-info-box-default {
+    background: #1a1a2c;
+    border-color: var(--mc-border);
+}
+
+[data-theme="dark"] .mc-info-box-success {
+    background: #0d1f14;
+    border-color: #1a3a22;
+}
+[data-theme="dark"] .mc-info-box-success .mc-info-box-title {
+    color: #7abf90;
+}
+
+[data-theme="dark"] .mc-info-box-warning {
+    background: #1f1800;
+    border-color: #3a2a00;
+}
+[data-theme="dark"] .mc-info-box-warning .mc-info-box-title {
+    color: #d4b070;
 }
