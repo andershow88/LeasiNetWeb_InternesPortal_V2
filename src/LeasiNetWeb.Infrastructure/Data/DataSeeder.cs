@@ -90,10 +90,7 @@ public static class DataSeeder
         db.Benutzer.AddRange(admin, sachbearbeiter, genehmiger, lgUser, pruefer);
 
         // ── Hilfe-Texte ────────────────────────────────────────────────────────
-        db.HilfeTexte.AddRange(
-            new HilfeText { Schluessel = "dashboard", Titel = "Dashboard",       Inhalt = "Das Dashboard zeigt Ihre wichtigsten Kennzahlen auf einen Blick.", IstAktiv = true, ErstelltAm = Ts, GeaendertAm = Ts },
-            new HilfeText { Schluessel = "antraege",  Titel = "Leasinganträge",  Inhalt = "Hier finden Sie alle Leasinganträge. Nutzen Sie Filter und Suche zur schnellen Navigation.", IstAktiv = true, ErstelltAm = Ts, GeaendertAm = Ts }
-        );
+        // (Keine DB-Einträge – Anwenderdokumentation wird direkt aus docs/Anwenderdokumentation.md geladen)
 
         await db.SaveChangesAsync();
     }

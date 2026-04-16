@@ -197,33 +197,52 @@
         </div>
     </div>
 
-    @if (Model.Any())
+    @if (ViewBag.AnwenderdokumentationHtml != null)
     {
-        <!-- Dynamische Hilfe-Texte aus der Datenbank -->
+        <!-- Anwenderdokumentation -->
         <div class="col-12">
             <div class="mc-card">
                 <div class="mc-card-header">
                     <h2 class="mc-card-title"><i class="bi bi-book-fill"></i> Weitere Informationen</h2>
                 </div>
                 <div class="mc-card-body">
-                    <div class="accordion accordion-flush" id="hilfeAccordion">
-                        @foreach (var (hilfe, i) in Model.Select((h, idx) => (h, idx)))
-                        {
-                            <div class="accordion-item @(i < Model.Count() - 1 ? "border-bottom" : "")">
-                                <h2 class="accordion-header">
-                                    <button class="accordion-button collapsed py-2 px-0" type="button"
-                                            data-bs-toggle="collapse" data-bs-target="#hilfe-@hilfe.Id"
-                                            style="font-size:0.85rem; font-weight:600; background:none; color:var(--mc-text);">
-                                        @hilfe.Titel
-                                    </button>
-                                </h2>
-                                <div id="hilfe-@hilfe.Id" class="accordion-collapse collapse">
-                                    <div class="accordion-body px-0 pt-0 pb-2 text-muted" style="font-size:0.82rem;">
-                                        @Html.Raw(hilfe.Inhalt)
+                    <div class="accordion accordion-flush" id="dokuAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed py-2 px-0" type="button"
+                                        data-bs-toggle="collapse" data-bs-target="#dokuInhalt"
+                                        style="font-size:0.85rem; font-weight:600; background:none; color:var(--mc-text);">
+                                    <i class="bi bi-file-text me-2" style="color:var(--mc-gold);"></i> Anwenderdokumentation
+                                </button>
+                            </h2>
+                            <div id="dokuInhalt" class="accordion-collapse collapse">
+                                <div class="accordion-body px-0 pt-3 pb-2">
+                                    <!-- Suchleiste -->
+                                    <div style="position:sticky; top:0; z-index:10; background:var(--mc-bg-card); padding-bottom:0.75rem; margin-bottom:0.75rem; border-bottom:1px solid var(--mc-border);">
+                                        <div style="display:flex; align-items:center; gap:0.5rem;
+                                                    border:1.5px solid var(--mc-border); border-radius:8px;
+                                                    padding:0.4rem 0.75rem; background:var(--mc-bg);"
+                                             id="dokuSuchWrapper"
+                                             onfocusin="this.style.borderColor='var(--mc-gold)'"
+                                             onfocusout="this.style.borderColor='var(--mc-border)'">
+                                            <i class="bi bi-search" style="color:var(--mc-text-muted); font-size:0.85rem; flex-shrink:0;"></i>
+                                            <input id="dokuSuche" type="search" placeholder="Dokumentation durchsuchen…"
+                                                   style="flex:1; border:none; background:transparent; color:var(--mc-text);
+                                                          font-size:0.85rem; outline:none; font-family:inherit;" />
+                                            <span id="dokuTreffer" style="font-size:0.75rem; color:var(--mc-text-muted); flex-shrink:0; display:none;"></span>
+                                        </div>
+                                    </div>
+                                    <!-- Dokumentationsinhalt -->
+                                    <div id="dokuInhaltText" class="mc-doku-body">
+                                        @Html.Raw(ViewBag.AnwenderdokumentationHtml)
+                                    </div>
+                                    <div id="dokuKeineTreffer" style="display:none; text-align:center; padding:2rem 0; color:var(--mc-text-muted);">
+                                        <i class="bi bi-search" style="font-size:1.5rem; opacity:0.3;"></i>
+                                        <p class="mt-2 mb-0 small">Kein Ergebnis gefunden.</p>
                                     </div>
                                 </div>
                             </div>
-                        }
+                        </div>
                     </div>
                 </div>
             </div>
@@ -231,3 +250,107 @@
     }
 
 </div>
+
+@section Scripts {
+<style>
+/* ── Anwenderdokumentation Inhalt ── */
+.mc-doku-body { font-size: 0.86rem; color: var(--mc-text); line-height: 1.7; }
+.mc-doku-body h1 { font-size: 1.3rem; font-weight: 700; color: var(--mc-navy); margin: 1.5rem 0 0.5rem; }
+.mc-doku-body h2 { font-size: 1.1rem; font-weight: 700; color: var(--mc-navy); margin: 1.4rem 0 0.4rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--mc-border); }
+.mc-doku-body h3 { font-size: 0.95rem; font-weight: 700; color: var(--mc-text); margin: 1.1rem 0 0.3rem; }
+.mc-doku-body h4 { font-size: 0.88rem; font-weight: 600; color: var(--mc-text-muted); margin: 0.9rem 0 0.25rem; }
+.mc-doku-body p  { margin: 0.4rem 0 0.75rem; color: var(--mc-text-muted); }
+.mc-doku-body ul, .mc-doku-body ol { margin: 0.3rem 0 0.75rem 1.3rem; color: var(--mc-text-muted); }
+.mc-doku-body li { margin-bottom: 0.25rem; }
+.mc-doku-body code { font-size: 0.8rem; background: var(--mc-border); color: var(--mc-text); padding: 0.1em 0.4em; border-radius: 4px; }
+.mc-doku-body pre { background: var(--mc-bg); border: 1px solid var(--mc-border); border-radius: 6px; padding: 0.75rem 1rem; overflow-x: auto; margin: 0.5rem 0 1rem; }
+.mc-doku-body pre code { background: none; padding: 0; font-size: 0.78rem; }
+.mc-doku-body table { width: 100%; border-collapse: collapse; margin: 0.5rem 0 1rem; font-size: 0.82rem; }
+.mc-doku-body table th { background: var(--mc-bg); color: var(--mc-text); font-weight: 600; padding: 0.45rem 0.7rem; border: 1px solid var(--mc-border); text-align: left; }
+.mc-doku-body table td { padding: 0.4rem 0.7rem; border: 1px solid var(--mc-border); color: var(--mc-text-muted); }
+.mc-doku-body table tr:nth-child(even) td { background: var(--mc-bg); }
+.mc-doku-body blockquote { border-left: 3px solid var(--mc-gold); margin: 0.5rem 0 0.75rem; padding: 0.4rem 0.9rem; background: var(--mc-bg); border-radius: 0 4px 4px 0; color: var(--mc-text-muted); font-style: italic; }
+.mc-doku-body hr { border: none; border-top: 1px solid var(--mc-border); margin: 1.2rem 0; }
+.mc-doku-body a { color: var(--mc-primary); text-decoration: none; }
+.mc-doku-body a:hover { text-decoration: underline; }
+/* Suchtreffern hervorheben */
+.mc-doku-body mark { background: #fde68a; color: #1a1a1a; border-radius: 2px; padding: 0 2px; }
+[data-theme="dark"] .mc-doku-body mark { background: #6b4a00; color: #fde68a; }
+</style>
+
+<script>
+(function () {
+    const suchfeld  = document.getElementById('dokuSuche');
+    const inhalt    = document.getElementById('dokuInhaltText');
+    const trefferEl = document.getElementById('dokuTreffer');
+    const keinEl    = document.getElementById('dokuKeineTreffer');
+    if (!suchfeld || !inhalt) return;
+
+    // Originalinhalt merken (einmalig)
+    const originalHtml = inhalt.innerHTML;
+
+    suchfeld.addEventListener('input', function () {
+        const term = this.value.trim();
+
+        if (!term) {
+            inhalt.innerHTML = originalHtml;
+            inhalt.style.display = '';
+            keinEl.style.display = 'none';
+            trefferEl.style.display = 'none';
+            return;
+        }
+
+        // Originalinhalt zurücksetzen, dann neu hervorheben
+        inhalt.innerHTML = originalHtml;
+
+        const regex = new RegExp(escapeRegex(term), 'gi');
+        let count = 0;
+        highlightInNode(inhalt, regex, function () { count++; });
+
+        trefferEl.textContent = count + ' Treffer';
+        trefferEl.style.display = count > 0 ? '' : 'none';
+        inhalt.style.display = count > 0 ? '' : 'none';
+        keinEl.style.display = count === 0 ? '' : 'none';
+
+        // Zum ersten Treffer scrollen
+        if (count > 0) {
+            const first = inhalt.querySelector('mark');
+            if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    });
+
+    function highlightInNode(node, regex, onMatch) {
+        if (node.nodeType === Node.TEXT_NODE) {
+            const text = node.textContent;
+            if (regex.test(text)) {
+                regex.lastIndex = 0;
+                const frag = document.createDocumentFragment();
+                let last = 0, m;
+                regex.lastIndex = 0;
+                while ((m = regex.exec(text)) !== null) {
+                    if (m.index > last)
+                        frag.appendChild(document.createTextNode(text.slice(last, m.index)));
+                    const mark = document.createElement('mark');
+                    mark.textContent = m[0];
+                    frag.appendChild(mark);
+                    onMatch();
+                    last = regex.lastIndex;
+                }
+                if (last < text.length)
+                    frag.appendChild(document.createTextNode(text.slice(last)));
+                node.parentNode.replaceChild(frag, node);
+            }
+        } else if (node.nodeType === Node.ELEMENT_NODE &&
+                   !['SCRIPT','STYLE','INPUT','TEXTAREA'].includes(node.tagName)) {
+            // Kinder von hinten nach vorne durchlaufen (wegen DOM-Modifikation)
+            const children = Array.from(node.childNodes);
+            children.forEach(child => highlightInNode(child, regex, onMatch));
+        }
+    }
+
+    function escapeRegex(s) {
+        return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+})();
+</script>
+}
