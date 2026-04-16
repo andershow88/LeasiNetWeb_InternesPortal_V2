@@ -10,9 +10,16 @@
         <h1 class="mc-page-title"><i class="bi bi-speedometer2 me-2"></i>Dashboard</h1>
         <p class="mc-page-subtitle">Übersicht Ihrer Leasinganträge und Kennzahlen</p>
     </div>
-    <a asp-controller="Antraege" asp-action="Neu" class="btn-mc-primary">
-        <i class="bi bi-plus-circle"></i> Neuer Antrag
-    </a>
+    <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+        <a asp-controller="Antraege" asp-action="Neu" class="btn-mc-primary">
+            <i class="bi bi-plus-circle"></i> Neuer Antrag
+        </a>
+        <button type="button" class="btn-mc-ghost"
+                style="border-color:var(--mc-gold); color:var(--mc-gold);"
+                onclick="kiUploadModal.show()">
+            <i class="bi bi-stars"></i> Neuer Antrag mit KI
+        </button>
+    </div>
 </div>
 
 <!-- Handlungsbedarf -->
@@ -134,6 +141,159 @@
         }
     </div>
 </div>
+
+<!-- ── KI-Upload Modal ──────────────────────────────────────────────────────── -->
+<div class="modal fade" id="kiUploadModalEl" tabindex="-1" aria-labelledby="kiUploadLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:14px; border:1px solid var(--mc-border); background:var(--mc-surface);">
+            <div class="modal-header" style="background:linear-gradient(135deg,#16213e 0%,#1a2a50 100%); border-radius:14px 14px 0 0; border:none;">
+                <h5 class="modal-title" id="kiUploadLabel" style="color:#fff; font-size:.95rem; display:flex; align-items:center; gap:.5rem;">
+                    <i class="bi bi-stars" style="color:#c9a84c;"></i> Neuer Antrag mit KI
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4" id="kiSchritt1">
+                <p style="font-size:.85rem; color:var(--mc-text-muted); margin-bottom:1rem;">
+                    Laden Sie das Antragsdokument als PDF hoch. Die KI extrahiert automatisch die relevanten Felder.
+                </p>
+                <div id="kiDropzone"
+                     style="border:2px dashed var(--mc-border); border-radius:10px; padding:2rem 1rem;
+                            text-align:center; cursor:pointer; transition:border-color .2s;"
+                     onclick="document.getElementById('kiPdfInput').click()"
+                     ondragover="event.preventDefault(); this.style.borderColor='var(--mc-gold)'"
+                     ondragleave="this.style.borderColor='var(--mc-border)'"
+                     ondrop="kiHandleDrop(event)">
+                    <i class="bi bi-file-earmark-pdf" style="font-size:2.5rem; color:var(--mc-text-muted); opacity:.5;"></i>
+                    <p style="margin:.5rem 0 0; font-size:.85rem; color:var(--mc-text-muted);">
+                        PDF hier ablegen oder <span style="color:var(--mc-gold); font-weight:600;">klicken</span> zum Auswählen
+                    </p>
+                    <p id="kiDateiname" style="font-size:.78rem; color:var(--mc-text-muted); margin:.4rem 0 0;"></p>
+                </div>
+                <input type="file" id="kiPdfInput" accept=".pdf,application/pdf" style="display:none" onchange="kiDateiGewaehlt(this)" />
+                <div id="kiUploadFehler" class="alert alert-danger mt-3 mb-0 small" style="display:none;"></div>
+            </div>
+            <div class="modal-body p-4 text-center" id="kiSchritt2" style="display:none;">
+                <div style="display:flex; flex-direction:column; align-items:center; gap:1rem; padding:1rem 0;">
+                    <div class="spinner-border" style="color:var(--mc-gold); width:2.5rem; height:2.5rem;"></div>
+                    <p style="font-size:.88rem; color:var(--mc-text-muted); margin:0;">KI analysiert das Dokument…</p>
+                </div>
+            </div>
+            <div class="modal-body p-4" id="kiSchritt3" style="display:none;">
+                <div style="display:flex; align-items:center; gap:.6rem; margin-bottom:1rem;">
+                    <i class="bi bi-check-circle-fill" style="color:var(--mc-success); font-size:1.3rem;"></i>
+                    <span style="font-size:.9rem; font-weight:600; color:var(--mc-text);">Analyse abgeschlossen</span>
+                    <span id="kiKonfidenzBadge" class="mc-badge ms-auto"></span>
+                </div>
+                <table style="width:100%; font-size:.83rem; border-collapse:collapse;">
+                    <tbody id="kiErgebnisTabelle"></tbody>
+                </table>
+                <p style="font-size:.76rem; color:var(--mc-text-muted); margin-top:.75rem; margin-bottom:0;">
+                    <i class="bi bi-info-circle me-1"></i>Bitte prüfen und ergänzen Sie die Felder im nächsten Schritt.
+                </p>
+            </div>
+            <div class="modal-footer" style="border-top:1px solid var(--mc-border); padding:.75rem 1.25rem;">
+                <button type="button" class="btn-mc-ghost" data-bs-dismiss="modal">Abbrechen</button>
+                <button type="button" class="btn-mc-primary" id="kiAnalysierenBtn" onclick="kiAnalysieren()" disabled>
+                    <i class="bi bi-stars me-1"></i> Analysieren
+                </button>
+                <a href="#" id="kiWeiterBtn" class="btn-mc-primary" style="display:none;">
+                    <i class="bi bi-arrow-right me-1"></i> Antrag prüfen & anlegen
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+const kiUploadModal = new bootstrap.Modal(document.getElementById('kiUploadModalEl'));
+let kiGewaehleDatei = null;
+
+function kiHandleDrop(e) {
+    e.preventDefault();
+    document.getElementById('kiDropzone').style.borderColor = 'var(--mc-border)';
+    const f = e.dataTransfer.files[0];
+    if (f) kiSetDatei(f);
+}
+function kiDateiGewaehlt(input) {
+    if (input.files[0]) kiSetDatei(input.files[0]);
+}
+function kiSetDatei(f) {
+    if (!f.name.toLowerCase().endsWith('.pdf')) {
+        document.getElementById('kiUploadFehler').textContent = 'Nur PDF-Dateien sind erlaubt.';
+        document.getElementById('kiUploadFehler').style.display = '';
+        return;
+    }
+    kiGewaehleDatei = f;
+    document.getElementById('kiDateiname').textContent = f.name + ' (' + (f.size / 1024).toFixed(0) + ' KB)';
+    document.getElementById('kiDropzone').style.borderColor = 'var(--mc-gold)';
+    document.getElementById('kiUploadFehler').style.display = 'none';
+    document.getElementById('kiAnalysierenBtn').disabled = false;
+}
+async function kiAnalysieren() {
+    if (!kiGewaehleDatei) return;
+    document.getElementById('kiSchritt1').style.display = 'none';
+    document.getElementById('kiSchritt2').style.display = '';
+    document.getElementById('kiAnalysierenBtn').style.display = 'none';
+    document.querySelector('.modal-footer .btn-mc-ghost').style.display = 'none';
+    const fd = new FormData();
+    fd.append('pdf', kiGewaehleDatei);
+    try {
+        const resp = await fetch('/Antraege/PdfAnalysieren', { method: 'POST', body: fd });
+        const data = await resp.json();
+        if (data.error) { kiZeigeSchritt1Fehler(data.error); return; }
+        document.getElementById('kiSchritt2').style.display = 'none';
+        document.getElementById('kiSchritt3').style.display = '';
+        const konfMap = { hoch: ['badge-success','Hohe Konfidenz'], mittel: ['badge-warning','Mittlere Konfidenz'], niedrig: ['badge-secondary','Niedrige Konfidenz'] };
+        const [cls, lbl] = konfMap[data.konfidenz] || konfMap.niedrig;
+        const konfBadge = document.getElementById('kiKonfidenzBadge');
+        konfBadge.className = 'mc-badge ms-auto ' + cls;
+        konfBadge.textContent = lbl;
+        const rows = [
+            ['Antragstyp', data.antragTypName || '–'],
+            ['Obligo', data.obligo != null ? data.obligo.toLocaleString('de-DE', {minimumFractionDigits:2}) + ' €' : '–'],
+            ['Abrechnungsart', data.abrechnungsart || '–'],
+            ['Leasinggesellschaft', data.leasinggesellschaftName || '–'],
+        ];
+        document.getElementById('kiErgebnisTabelle').innerHTML = rows.map(([k,v]) =>
+            `<tr><td style="padding:.35rem .5rem; color:var(--mc-text-muted); white-space:nowrap;">${k}</td><td style="padding:.35rem .5rem; color:var(--mc-text); font-weight:500;">${v}</td></tr>`
+        ).join('');
+        const params = new URLSearchParams({ ki: '1' });
+        if (data.antragTyp != null)     params.set('at',   data.antragTyp);
+        if (data.obligo != null)        params.set('ob',   data.obligo);
+        if (data.abrechnungsart)        params.set('ab',   data.abrechnungsart);
+        if (data.leasinggesellschaftId) params.set('lgId', data.leasinggesellschaftId);
+        if (data.tempToken)             params.set('token',data.tempToken);
+        if (data.dateiname)             params.set('fn',   data.dateiname);
+        document.getElementById('kiWeiterBtn').href = '/Antraege/Neu?' + params.toString();
+        document.getElementById('kiWeiterBtn').style.display = '';
+        document.querySelector('.modal-footer .btn-mc-ghost').style.display = '';
+    } catch (e) { kiZeigeSchritt1Fehler('Verbindungsfehler: ' + e.message); }
+}
+function kiZeigeSchritt1Fehler(msg) {
+    document.getElementById('kiSchritt2').style.display = 'none';
+    document.getElementById('kiSchritt1').style.display = '';
+    document.getElementById('kiAnalysierenBtn').style.display = '';
+    document.getElementById('kiAnalysierenBtn').disabled = false;
+    document.querySelector('.modal-footer .btn-mc-ghost').style.display = '';
+    document.getElementById('kiUploadFehler').textContent = msg;
+    document.getElementById('kiUploadFehler').style.display = '';
+}
+document.getElementById('kiUploadModalEl').addEventListener('hidden.bs.modal', function () {
+    kiGewaehleDatei = null;
+    document.getElementById('kiSchritt1').style.display = '';
+    document.getElementById('kiSchritt2').style.display = 'none';
+    document.getElementById('kiSchritt3').style.display = 'none';
+    document.getElementById('kiAnalysierenBtn').style.display = '';
+    document.getElementById('kiAnalysierenBtn').disabled = true;
+    document.getElementById('kiWeiterBtn').style.display = 'none';
+    document.getElementById('kiDateiname').textContent = '';
+    document.getElementById('kiDropzone').style.borderColor = 'var(--mc-border)';
+    document.getElementById('kiUploadFehler').style.display = 'none';
+    document.getElementById('kiPdfInput').value = '';
+});
+</script>
+}
 
 @functions {
     private static string StatusBadgeClass(AntragStatus status) => status switch
